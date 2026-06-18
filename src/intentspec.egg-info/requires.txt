@@ -1,0 +1,8 @@
+click<9.0,>=8.0
+pyyaml<7.0,>=6.0
+jsonschema<5.0,>=4.0
+
+[dev]
+pytest>=7.0
+pytest-cov>=4.0
+pip-tools>=7.0

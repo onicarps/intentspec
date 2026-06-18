@@ -1,0 +1,2 @@
+[console_scripts]
+intentspec = intentspec.cli:main

@@ -1,0 +1,30 @@
+# Invalid intent.yaml — missing required fields, wrong types
+version: "1.0"
+
+agent:
+  name: "test agent"
+  type: "invalid_type"
+  description: "Short"
+
+intent:
+  goals:
+    - description: "too short"
+      priority: "critical"
+
+  constraints:
+    - rule: "Do something"
+      enforceable: "yes"
+
+  non_negotiables:
+    - rule: "Don't do X"
+
+  tools:
+    allowed:
+      - name: "some-tool"
+    denied:
+      - name: "some-tool"
+
+  unknown_field: "should fail"
+
+metadata:
+  status: "published"

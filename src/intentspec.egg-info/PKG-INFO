@@ -1,0 +1,26 @@
+Metadata-Version: 2.4
+Name: intentspec
+Version: 0.1.0
+Summary: Coverage and enforcement layer for AI agent infrastructure
+Author-email: oni <oni@intentspec.dev>
+License: MIT
+Project-URL: Homepage, https://github.com/onicarps/intentspec
+Project-URL: Repository, https://github.com/onicarps/intentspec
+Project-URL: Issues, https://github.com/onicarps/intentspec/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development :: Quality Assurance
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: click<9.0,>=8.0
+Requires-Dist: pyyaml<7.0,>=6.0
+Requires-Dist: jsonschema<5.0,>=4.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+Requires-Dist: pip-tools>=7.0; extra == "dev"
