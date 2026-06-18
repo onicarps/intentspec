@@ -18,6 +18,21 @@ from intentspec.models.intent import (
     NonNegotiable,
 )
 
+__all__ = ["parse_skill_md"]
+
+
+def _kebab_case(text: str) -> str:
+    """Convert text to kebab-case."""
+    text = text.strip().lower()
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    text = text.strip("-")
+    if not text:
+        return ""
+    if not text[0].isalpha():
+        text = "x-" + text
+    return text[:64]
+
+
 _RE_HARD_KW = re.compile(r"^(NEVER|MUST\s+NOT|DO\s+NOT|DON'T|MUST|REQUIRED\s+TO|ALWAYS)\b", re.IGNORECASE)
 _RE_SOFT_KW = re.compile(r"^(prefer|should|may|can|could|might)\b", re.IGNORECASE)
 _RE_BULLET = re.compile(r"^\s*[-*]\s+(.+)")
@@ -58,7 +73,7 @@ def parse_skill_md(path: Path | str) -> ParseResult:
     if not fm_name:
         raise ConverterError(f"SKILL.md at {p} is missing required 'name' in frontmatter")
 
-    intent.agent_name = str(fm_name).strip()
+    intent.agent_name = _kebab_case(str(fm_name))
     confidences["agent.name"] = 0.90
     sources["agent.name"] = FieldSource(line=2, snippet=str(fm_name), extractor="rule")
 
@@ -82,9 +97,12 @@ def parse_skill_md(path: Path | str) -> ParseResult:
     # Parse version and tags from frontmatter
     if "version" in frontmatter:
         version = str(frontmatter["version"]).strip()
-        if not intent.metadata.tags:
-            intent.metadata.tags = []
-        intent.metadata.tags.append(f"v{version}")
+        if version:
+            version_tag = f"v{version}"
+            if not intent.metadata.tags:
+                intent.metadata.tags = []
+            if version_tag not in intent.metadata.tags:
+                intent.metadata.tags.append(version_tag)
         confidences["metadata.tags"] = 0.90
         sources["metadata.tags"] = FieldSource(
             line=_find_fm_line(text, "version"),
@@ -101,28 +119,35 @@ def parse_skill_md(path: Path | str) -> ParseResult:
     # Parse body sections
     sections = _split_sections(body)
 
+    seen_constraints: set[str] = set()
+    seen_non_negs: set[str] = set()
+
     for title, start, section_body in sections:
         tl = title.lower().strip()
 
         if tl in ("overview", "description"):
-            # First paragraph or bullet → first goal
             bullets = _extract_bullets(section_body)
             if bullets:
-                first_text = bullets[0][0]
-                intent.goals.append(Goal(description=first_text[:200], priority="medium"))
-                key = "intent.goals[0].description"
-                confidences[key] = 0.70
-                sources[key] = FieldSource(
-                    line=start + bullets[0][1],
-                    snippet=first_text[:60],
-                    extractor="rule",
-                )
+                for j, (item_text, item_line) in enumerate(bullets):
+                    idx = len(intent.goals)
+                    intent.goals.append(Goal(description=item_text[:200], priority="medium"))
+                    key = f"intent.goals[{idx}].description"
+                    confidences[key] = 0.70
+                    sources[key] = FieldSource(
+                        line=start + item_line,
+                        snippet=item_text[:60],
+                        extractor="rule",
+                    )
 
         elif tl == "goals":
             bullets = _extract_bullets(section_body)
             for j, (item_text, item_line) in enumerate(bullets):
+                dedup = re.sub(r"\s+", " ", item_text.strip().lower())
+                if dedup in seen_constraints or dedup in seen_non_negs:
+                    continue
+                idx = len(intent.goals)
                 intent.goals.append(Goal(description=item_text[:200], priority="medium"))
-                key = f"intent.goals[{j}].description"
+                key = f"intent.goals[{idx}].description"
                 confidences[key] = 0.70
                 sources[key] = FieldSource(
                     line=start + item_line,
@@ -133,6 +158,10 @@ def parse_skill_md(path: Path | str) -> ParseResult:
         elif tl == "instructions":
             bullets = _extract_bullets(section_body)
             for k, (item_text, item_line) in enumerate(bullets):
+                dedup = re.sub(r"\s+", " ", item_text.strip().lower())
+                if dedup in seen_constraints:
+                    continue
+                seen_constraints.add(dedup)
                 m_hard = _RE_HARD_KW.match(item_text)
                 m_soft = _RE_SOFT_KW.match(item_text)
                 enforceable = True
@@ -144,7 +173,7 @@ def parse_skill_md(path: Path | str) -> ParseResult:
                     enforceable = False
                     conf_val = 0.55
                 intent.constraints.append(Constraint(rule=item_text[:500], enforceable=enforceable))
-                key = f"intent.constraints[{k}].rule"
+                key = f"intent.constraints[{len(intent.constraints)-1}].rule"
                 confidences[key] = conf_val
                 sources[key] = FieldSource(
                     line=start + item_line,
@@ -155,13 +184,17 @@ def parse_skill_md(path: Path | str) -> ParseResult:
         elif tl in ("notes", "important", "caveats"):
             bullets = _extract_bullets(section_body)
             for k, (item_text, item_line) in enumerate(bullets):
+                dedup = re.sub(r"\s+", " ", item_text.strip().lower())
+                if dedup in seen_non_negs:
+                    continue
+                seen_non_negs.add(dedup)
                 severity = "hard"
                 if _RE_SOFT_KW.match(item_text) and not _RE_HARD_KW.match(item_text):
                     severity = "soft"
                 intent.non_negotiables.append(
                     NonNegotiable(rule=item_text[:500], severity=severity)
                 )
-                key = f"intent.non_negotiables[{k}].rule"
+                key = f"intent.non_negotiables[{len(intent.non_negotiables)-1}].rule"
                 confidences[key] = 0.70
                 sources[key] = FieldSource(
                     line=start + item_line,
