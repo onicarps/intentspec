@@ -219,6 +219,11 @@ def init(
     if use_llm:
         click.echo("Warning: --use-llm is a placeholder until F8; LLM augmentation skipped.", err=True)
 
+    # Run interactive review if enabled and stdout is a TTY
+    if interactive and not skip_interactive and sys.stdout.isatty():
+        from intentspec.converter.interactive import review_interactive
+        result = review_interactive(result)
+
     source_label = str(src_path)
     rendered = _render_output(result, source_label, output_format)
 
