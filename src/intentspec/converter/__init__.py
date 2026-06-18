@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from intentspec.converter.agents_md import parse_agents_md
+from intentspec.converter.agentskills import parse_agentskills
 from intentspec.converter.format_detect import detect_format
 from intentspec.converter.skill_md import parse_skill_md
 from intentspec.converter.types import ConverterError, FieldSource, ParseResult
@@ -17,6 +18,7 @@ __all__ = [
     "parse_quickstart",
     "parse_agents_md",
     "parse_skill_md",
+    "parse_agentskills",
     "ParseResult",
     "FieldSource",
     "ConverterError",
@@ -59,8 +61,8 @@ def parse(
         result = parse_agents_md(p)
     elif fmt == "skill_md":
         result = parse_skill_md(p)
-    else:
-        result = _parse_agentskills_stub(p)
+    else:  # agentskills
+        result = parse_agentskills(p)
 
     if use_llm:
         result.warnings.append(
@@ -120,29 +122,8 @@ def _stub_intent(name_seed: str, description: str | None = None) -> Intent:
     return intent
 
 
-def _parse_agentskills_stub(path: Path) -> ParseResult:
-    intent = _stub_intent(path.name)
-    confidences = {
-        "agent.name": 0.50,
-        "agent.type": 0.30,
-        "agent.description": 0.30,
-    }
-    sources = {
-        "agent.name": FieldSource(line=None, snippet=path.name, extractor="default"),
-        "agent.type": FieldSource(extractor="default"),
-        "agent.description": FieldSource(extractor="default"),
-    }
-    warnings = ["agentskills parser is a stub; full extraction lands in F5."]
-    return ParseResult(
-        intent=intent,
-        confidences=confidences,
-        sources=sources,
-        warnings=warnings,
-        format="agentskills",
-    )
-
-
 def _kebab_case(text: str) -> str:
+    """Convert text to kebab-case."""
     text = text.strip().lower()
     text = re.sub(r"[^a-z0-9]+", "-", text)
     text = text.strip("-")
