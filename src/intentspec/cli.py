@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import glob
+import json
 import sys
 from pathlib import Path
 
@@ -11,9 +12,13 @@ import click
 from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
 from intentspec.converter.types import ConverterError, ParseResult
+from intentspec.coverage import analyze_coverage
+from intentspec.diff import run_diff
+from intentspec.lint import lint_intent
 from intentspec.models.intent import IntentValidationError
-from intentspec.spec.validate import validate_file, validate_schema, validate_semantic
+from intentspec.score.ids import compute_ids
 from intentspec.spec.formatter import Formatter
+from intentspec.spec.validate import validate_file, validate_schema, validate_semantic
 
 
 @click.group()
@@ -109,7 +114,51 @@ def score(path: str, by_agent: bool, weights: str | None, output_format: str):
 
     PATH is the directory or file to score. Defaults to current directory.
     """
-    click.echo("score: not yet implemented")
+    target = Path(path)
+    if target.is_file():
+        files = [target]
+    elif target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        files = [Path(f) for f in glob.glob(pattern, recursive=True)]
+        if not files:
+            click.echo("No intent.yaml found")
+            sys.exit(0)
+    else:
+        click.echo(f"Path not found: {target}", err=True)
+        sys.exit(1)
+
+    custom_weights = None
+    if weights:
+        try:
+            custom_weights = json.loads(weights)
+        except json.JSONDecodeError as e:
+            click.echo(f"Invalid weights JSON: {e}", err=True)
+            sys.exit(1)
+
+    exit_code = 0
+    for f in sorted(files):
+        try:
+            result = validate_file(f)
+            intent = result[0]
+            ids_result = compute_ids(intent, weights=custom_weights)
+
+            if output_format == "json":
+                click.echo(ids_result.to_json())
+            elif output_format == "yaml":
+                click.echo(ids_result.to_yaml())
+            else:
+                click.echo(f"\n{f}")
+                click.echo(f"  IDS Score: {ids_result.score}/100")
+                for comp, val in ids_result.breakdown.items():
+                    click.echo(f"    {comp}: {val:.2f}")
+                if ids_result.score < 50:
+                    exit_code = 2
+
+        except Exception as e:
+            click.echo(f"{f}: error: {e}", err=True)
+            exit_code = 1
+
+    sys.exit(exit_code)
 
 
 @main.command()
@@ -120,7 +169,38 @@ def coverage(path: str, output_format: str):
 
     PATH is the directory or file to analyze. Defaults to current directory.
     """
-    click.echo("coverage: not yet implemented")
+    target = Path(path)
+    if target.is_file():
+        files = [target]
+    elif target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        files = [Path(f) for f in glob.glob(pattern, recursive=True)]
+        if not files:
+            click.echo("No intent.yaml found")
+            sys.exit(0)
+    else:
+        click.echo(f"Path not found: {target}", err=True)
+        sys.exit(1)
+
+    for f in sorted(files):
+        try:
+            result = validate_file(f)
+            intent = result[0]
+            cov = analyze_coverage(intent, source_path=str(f))
+
+            if output_format == "json":
+                import json
+                click.echo(json.dumps(cov.to_dict(), indent=2))
+            elif output_format == "yaml":
+                import yaml
+                click.echo(yaml.dump(cov.to_dict(), default_flow_style=False))
+            else:
+                click.echo(f"\n{f}")
+                click.echo(cov.to_text())
+
+        except Exception as e:
+            click.echo(f"{f}: error: {e}", err=True)
+            sys.exit(1)
 
 
 @main.command()
@@ -321,12 +401,39 @@ def _validate_in_memory(result) -> tuple[list[str], list[str]]:
 @click.argument("path", type=click.Path(), default=".", required=False)
 @click.option("--semantic", is_flag=True, help="Show intent-level changes")
 @click.option("--source-commit", "from_commit", type=str, default=None, help="Compare from this commit")
-def diff(path: str, semantic: bool, from_commit: str | None):
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def diff(path: str, semantic: bool, from_commit: str | None, output_format: str):
     """Show intent changes between commits.
 
     PATH is the directory or file to diff. Defaults to current directory.
     """
-    click.echo("diff: not yet implemented")
+    target = Path(path)
+    if target.is_file():
+        files = [target]
+    elif target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        files = [Path(f) for f in glob.glob(pattern, recursive=True)]
+        if not files:
+            click.echo("No intent.yaml found")
+            sys.exit(0)
+    else:
+        click.echo(f"Path not found: {target}", err=True)
+        sys.exit(1)
+
+    for f in sorted(files):
+        try:
+            output = run_diff(str(f), source_commit=from_commit, semantic=semantic, fmt=output_format)
+            click.echo(f"\n{f}")
+            click.echo(output)
+        except FileNotFoundError as e:
+            click.echo(f"{f}: {e}", err=True)
+            sys.exit(1)
+        except RuntimeError as e:
+            click.echo(f"{f}: {e}", err=True)
+            sys.exit(1)
+        except Exception as e:
+            click.echo(f"{f}: error: {e}", err=True)
+            sys.exit(1)
 
 
 @main.command()
@@ -354,12 +461,52 @@ def audit_report(path: str, output_format: str):
 
 @main.command()
 @click.argument("path", type=click.Path(), default=".", required=False)
-def lint(path: str):
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def lint(path: str, output_format: str):
     """Check intent quality (not a full linting engine).
 
     PATH is the directory or file to lint. Defaults to current directory.
     """
-    click.echo("lint: not yet implemented")
+    target = Path(path)
+    if target.is_file():
+        files = [target]
+    elif target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        files = [Path(f) for f in glob.glob(pattern, recursive=True)]
+        if not files:
+            click.echo("No intent.yaml found")
+            sys.exit(0)
+    else:
+        click.echo(f"Path not found: {target}", err=True)
+        sys.exit(1)
+
+    exit_code = 0
+    for f in sorted(files):
+        try:
+            result = validate_file(f)
+            intent = result[0]
+            lint_result = lint_intent(intent)
+
+            if output_format == "json":
+                import json
+                click.echo(json.dumps(lint_result.to_dict(), indent=2))
+            elif output_format == "yaml":
+                import yaml
+                click.echo(yaml.dump(lint_result.to_dict(), default_flow_style=False))
+            else:
+                click.echo(f"\n{f}")
+                click.echo(lint_result.to_text())
+
+            if lint_result.errors:
+                exit_code = 1
+            elif lint_result.warnings:
+                exit_code = 2
+
+        except Exception as e:
+            click.echo(f"{f}: error: {e}", err=True)
+            exit_code = 1
+
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
