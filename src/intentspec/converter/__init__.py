@@ -7,6 +7,7 @@ from pathlib import Path
 
 from intentspec.converter.agents_md import parse_agents_md
 from intentspec.converter.format_detect import detect_format
+from intentspec.converter.skill_md import parse_skill_md
 from intentspec.converter.types import ConverterError, FieldSource, ParseResult
 from intentspec.models.intent import Intent
 
@@ -15,6 +16,7 @@ __all__ = [
     "parse",
     "parse_quickstart",
     "parse_agents_md",
+    "parse_skill_md",
     "ParseResult",
     "FieldSource",
     "ConverterError",
@@ -56,7 +58,7 @@ def parse(
     if fmt == "agents_md":
         result = parse_agents_md(p)
     elif fmt == "skill_md":
-        result = _parse_skill_md_stub(p)
+        result = parse_skill_md(p)
     else:
         result = _parse_agentskills_stub(p)
 
@@ -116,28 +118,6 @@ def _stub_intent(name_seed: str, description: str | None = None) -> Intent:
     intent.agent_description = description or f"Imported from {name_seed}"
     intent.agent_description = intent.agent_description[:200]
     return intent
-
-
-def _parse_skill_md_stub(path: Path) -> ParseResult:
-    intent = _stub_intent(path.stem)
-    confidences = {
-        "agent.name": 0.50,
-        "agent.type": 0.30,
-        "agent.description": 0.30,
-    }
-    sources = {
-        "agent.name": FieldSource(line=None, snippet=path.name, extractor="default"),
-        "agent.type": FieldSource(extractor="default"),
-        "agent.description": FieldSource(extractor="default"),
-    }
-    warnings = ["SKILL.md parser is a stub; full extraction lands in F4."]
-    return ParseResult(
-        intent=intent,
-        confidences=confidences,
-        sources=sources,
-        warnings=warnings,
-        format="skill_md",
-    )
 
 
 def _parse_agentskills_stub(path: Path) -> ParseResult:
