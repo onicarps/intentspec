@@ -8,9 +8,9 @@ from pathlib import Path
 
 import click
 
-from intentspec.converter import parse as converter_parse
+from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
-from intentspec.converter.types import ConverterError
+from intentspec.converter.types import ConverterError, ParseResult
 from intentspec.models.intent import IntentValidationError
 from intentspec.spec.validate import validate_file, validate_schema, validate_semantic
 from intentspec.spec.formatter import Formatter
@@ -176,7 +176,29 @@ def init(
     SOURCE is the path to an AGENTS.md, SKILL.md, or an agentskills directory.
     """
     if quickstart:
-        click.echo("init --quickstart: not yet implemented (wired in F6)", err=True)
+        result = _run_quickstart_wizard()
+        source_label = "quickstart"
+        rendered = _render_output(result, source_label, output_format)
+
+        schema_errors, semantic_warnings = _validate_in_memory(result)
+        if strict and (schema_errors or semantic_warnings):
+            for err in schema_errors:
+                click.echo(f"validator error: {err}", err=True)
+            click.echo("Refusing to write under --strict due to validator errors.", err=True)
+            sys.exit(1)
+
+        if output == "-":
+            click.echo(rendered, nl=False)
+            sys.exit(0)
+
+        out_path = Path(output)
+        if out_path.exists() and not force:
+            click.echo(f"Error: output path already exists (use --force to overwrite): {out_path}", err=True)
+            sys.exit(1)
+
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(rendered, encoding="utf-8")
+        click.echo(f"Wrote {out_path}")
         sys.exit(0)
 
     if source is None:
@@ -228,6 +250,51 @@ def init(
     out_path.write_text(rendered, encoding="utf-8")
     click.echo(f"Wrote {out_path}")
     sys.exit(0)
+
+
+def _run_quickstart_wizard() -> ParseResult:
+    """Run the 3-question quickstart wizard and return a ParseResult."""
+    click.echo("IntentSpec Quickstart Wizard")
+    click.echo("=" * 40)
+
+    # Question 1: Agent name and description
+    agent_name = click.prompt("What is the agent name? (kebab-case)", type=str).strip()
+    agent_description = click.prompt("What does the agent do? (one sentence)", type=str).strip()
+
+    # Question 2: Agent type
+    agent_type = click.prompt(
+        "Agent type",
+        type=click.Choice(["coding", "research", "service", "data", "coordinator", "custom"]),
+        default="custom",
+    )
+
+    # Question 3: Non-negotiables
+    non_negotiables_str = click.prompt(
+        "What must it never do? (comma-separated, or press Enter to skip)",
+        default="",
+        type=str,
+    ).strip()
+
+    # Question 4: Tools
+    tools_str = click.prompt(
+        "What tools does it use? (comma-separated, or press Enter to skip)",
+        default="",
+        type=str,
+    ).strip()
+
+    answers = {
+        "agent_name": agent_name,
+        "agent_type": agent_type,
+        "agent_description": agent_description,
+    }
+
+    if non_negotiables_str:
+        answers["non_negotiables"] = non_negotiables_str
+
+    if tools_str:
+        answers["tools"] = tools_str
+
+    return parse_quickstart(answers)
 
 
 def _render_output(result, source_label: str, output_format: str) -> str:

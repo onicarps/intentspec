@@ -10,7 +10,7 @@ from intentspec.converter.agentskills import parse_agentskills
 from intentspec.converter.format_detect import detect_format
 from intentspec.converter.skill_md import parse_skill_md
 from intentspec.converter.types import ConverterError, FieldSource, ParseResult
-from intentspec.models.intent import Intent
+from intentspec.models.intent import Intent, NonNegotiable, ToolPermission
 
 
 __all__ = [
@@ -103,6 +103,32 @@ def parse_quickstart(answers: dict[str, str]) -> ParseResult:
     sources["agent.name"] = FieldSource(extractor="user", snippet="quickstart")
     sources["agent.type"] = FieldSource(extractor="user", snippet="quickstart")
     sources["agent.description"] = FieldSource(extractor="user", snippet="quickstart")
+
+    # Parse non-negotiables from comma-separated string
+    raw_nn = (answers.get("non_negotiables") or "").strip()
+    if raw_nn:
+        for i, item in enumerate(raw_nn.split(",")):
+            item = item.strip()
+            if item:
+                intent.non_negotiables.append(
+                    NonNegotiable(rule=item, severity="hard")
+                )
+                key = f"intent.non_negotiables[{i}].rule"
+                confidences[key] = 1.0
+                sources[key] = FieldSource(extractor="user", snippet="quickstart")
+
+    # Parse tools from comma-separated string
+    raw_tools = (answers.get("tools") or "").strip()
+    if raw_tools:
+        for i, item in enumerate(raw_tools.split(",")):
+            item = item.strip()
+            if item:
+                intent.tools_allowed.append(
+                    ToolPermission(name=item, rationale="quickstart import")
+                )
+                key = f"intent.tools.allowed[{i}].name"
+                confidences[key] = 1.0
+                sources[key] = FieldSource(extractor="user", snippet="quickstart")
 
     return ParseResult(
         intent=intent,
