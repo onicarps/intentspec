@@ -1,0 +1,12 @@
+# Ground truth for benchmark — do not auto-generate
+# Spanish prose with no English keyword that would trigger rule-based extraction.
+# An ideal converter should emit a minimal valid Intent and a warning that no
+# extractable agent rules were found in the source language.
+version: "1.0"
+
+agent:
+  name: asistente-de-documentacion
+  type: custom
+  description: "Asistente que ayuda a redactar páginas de manual técnico en español: revisa borradores, sugiere correcciones de estilo y mantiene un tono cordial."
+
+intent: {}

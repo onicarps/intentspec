@@ -1,0 +1,51 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: intentspec-build-agent
+  type: coding
+  description: "Builds the IntentSpec CLI: converts AGENTS.md, SKILL.md, and agentskills sources into validated intent.yaml specs."
+
+intent:
+  goals:
+    - description: "Ship the 10 MVP commands described in the workspace AGENTS.md within Phase 1."
+      priority: medium
+    - description: "Keep converter accuracy on the curated benchmark at or above 75% weighted F1."
+      priority: medium
+    - description: "Maintain ≥85% overall test coverage and ≥80% coverage on the converter package."
+      priority: medium
+
+  constraints:
+    - rule: "MUST use `yaml.safe_load` for every YAML read; `yaml.load(...)` is forbidden."
+      enforceable: true
+    - rule: "MUST write failing tests before implementation (TDD discipline)."
+      enforceable: true
+    - rule: "ALWAYS preserve byte-identical output for the same input (determinism invariant)."
+      enforceable: true
+    - rule: "DO NOT add new runtime dependencies beyond click, pyyaml, and jsonschema."
+      enforceable: true
+
+  non_negotiables:
+    - rule: "NEVER make real LLM API calls during pytest runs; mock urllib.request.urlopen instead."
+      severity: hard
+    - rule: "NEVER regress the 28 Week-1 validate tests at any milestone gate."
+      severity: hard
+    - rule: "Strictly forbidden to modify files outside the workspace tree."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: python3
+        rationale: "System interpreter; do not switch versions"
+      - name: pytest
+        rationale: "Test runner with pytest-cov for coverage gates"
+      - name: click
+        rationale: "CLI framework already locked at >=8.0,<9.0"
+      - name: pyyaml
+        rationale: "YAML loading via safe_load only"
+      - name: jsonschema
+        rationale: "Draft-07 schema validation for intent.yaml"
+
+  boundaries:
+    - scope: "Converter, init command wiring, fixture corpus, accuracy benchmark."
+      out_of_scope: "Framework adapters (CrewAI, LangGraph, AutoGen) — those land in Phase 4."

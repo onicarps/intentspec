@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "fields": [
+    {"name": "event_id", "type": "string", "required": true},
+    {"name": "occurred_at", "type": "timestamp", "required": true},
+    {"name": "actor_id", "type": "string", "required": true},
+    {"name": "kind", "type": "string", "required": true, "enum": ["create", "update", "delete"]},
+    {"name": "payload", "type": "object", "required": false}
+  ]
+}

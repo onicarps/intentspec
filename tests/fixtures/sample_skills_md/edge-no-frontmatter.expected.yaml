@@ -1,0 +1,25 @@
+# Ground truth for benchmark — do not auto-generate
+# This source has no YAML frontmatter, so the SKILL.md parser is expected to
+# raise ConverterError when called directly. The expected.yaml below describes
+# what the AGENTS.md fallback parser would produce when format auto-detection
+# routes the file to it instead. Benchmark scoring is permitted to skip this
+# fixture for the SKILL.md parser and only score it for the fallback path.
+version: "1.0"
+
+agent:
+  name: skill-without-frontmatter
+  type: custom
+  description: "A markdown file shaped like a SKILL but missing the leading YAML frontmatter block, used to assert the converter's frontmatter-required error path."
+
+intent:
+  constraints:
+    - rule: "MUST raise a ConverterError when the leading `---` frontmatter block is absent."
+      enforceable: true
+    - rule: "DO NOT silently fall back to AGENTS.md parsing when the format was forced via `--from skill_md`."
+      enforceable: true
+    - rule: "ALWAYS surface the missing-frontmatter case before any body-level extraction begins."
+      enforceable: true
+
+  non_negotiables:
+    - rule: "Never write an `intent.yaml` from a SKILL.md missing the required `name` key."
+      severity: hard

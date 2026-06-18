@@ -1,0 +1,28 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: changelog-writer
+  type: custom
+  description: "Drafts release notes from merged PR titles and labels."
+
+intent:
+  constraints:
+    - rule: "MUST group entries by `feat`, `fix`, `chore`, and `docs` headings."
+      enforceable: true
+    - rule: "MUST link every entry to its underlying pull request."
+      enforceable: true
+    - rule: "Prefer present tense and active voice."
+      enforceable: false
+
+  non_negotiables:
+    - rule: "Never include private repository URLs in the rendered changelog."
+      severity: hard
+    - rule: "Ask the user to confirm the version bump before writing the file."
+      severity: soft
+
+metadata:
+  tags:
+    - docs
+    - release-notes
+    - v0.3.1

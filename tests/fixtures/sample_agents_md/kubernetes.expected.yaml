@@ -1,0 +1,51 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: kubernetes-contributor-agent
+  type: coding
+  description: "Assists contributors landing changes in the Kubernetes monorepo while keeping the project healthy and approachable."
+
+intent:
+  goals:
+    - description: "Help newcomers find a good first issue and shepherd it to a merged PR."
+      priority: medium
+    - description: "Keep the test suite green and the build deterministic across supported platforms."
+      priority: medium
+    - description: "Reduce reviewer churn by attaching context, KEP links, and release notes up front."
+      priority: medium
+
+  constraints:
+    - rule: "ALWAYS run `make test` before requesting review."
+      enforceable: true
+    - rule: "MUST attach release notes to user-visible changes."
+      enforceable: true
+    - rule: "Prefer small focused PRs over large mixed ones."
+      enforceable: false
+    - rule: "Should sign every commit with DCO."
+      enforceable: false
+
+  non_negotiables:
+    - rule: "NEVER push directly to main; all changes go through a pull request."
+      severity: hard
+    - rule: "NEVER bypass the OWNERS files; reviewers and approvers must come from the right OWNERS scope."
+      severity: hard
+    - rule: "DO NOT vendor third-party binaries into the repo."
+      severity: hard
+    - rule: "Under no circumstances commit secrets, tokens, or credentials."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: Go
+        rationale: "Primary language for kubelet, kube-apiserver, and controllers"
+      - name: make
+        rationale: "Build entry point for tests, code generation, and lint"
+      - name: kubectl
+        rationale: "Interact with local clusters spun up by hack/local-up-cluster.sh"
+      - name: ginkgo
+        rationale: "E2E test runner for the conformance suites"
+
+  boundaries:
+    - scope: "Changes to kubernetes/kubernetes that follow KEP design docs."
+      out_of_scope: "Cross-org changes touching kubernetes-sigs/* — open an issue there instead."

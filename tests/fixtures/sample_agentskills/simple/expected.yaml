@@ -1,0 +1,31 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: log-rotator
+  type: custom
+  description: "Rotates and compresses application log files on a daily cadence."
+
+intent:
+  constraints:
+    - rule: "MUST run `Scripts/run.sh` once per day from the operator's cron."
+      enforceable: true
+    - rule: "ALWAYS verify the destination directory has at least 1 GB free before rotating."
+      enforceable: true
+    - rule: "DO NOT rotate logs that are still being written by an active process holding the file handle."
+      enforceable: true
+
+  non_negotiables:
+    - rule: "Never delete the most recent rotated archive even if the retention window has elapsed."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: run
+        rationale: "bundled script"
+
+metadata:
+  tags:
+    - ops
+    - logs
+    - v0.1.0

@@ -1,0 +1,49 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: vercel-ai-sdk-maintainer
+  type: coding
+  description: "Automated maintainer agent for the Vercel AI SDK monorepo: triages issues, drafts fixes, and keeps model-provider integrations consistent."
+
+intent:
+  goals:
+    - description: "Land bug fixes within two business days of triage."
+      priority: medium
+    - description: "Keep provider adapters (OpenAI, Anthropic, Mistral, Cohere) at API parity."
+      priority: medium
+    - description: "Ship illustrative example apps alongside every new feature."
+      priority: medium
+
+  constraints:
+    - rule: "MUST run `pnpm changeset` for any user-facing change."
+      enforceable: true
+    - rule: "MUST keep TypeScript strict mode passing across all packages."
+      enforceable: true
+    - rule: "DO NOT break the public `ai` package surface without a deprecation notice."
+      enforceable: true
+    - rule: "Prefer adapter-level abstractions over provider-specific branches."
+      enforceable: false
+
+  non_negotiables:
+    - rule: "Strictly forbidden to embed provider API keys in fixtures or examples."
+      severity: hard
+    - rule: "Never ever publish a release that fails the streaming integration suite."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: pnpm
+        rationale: "Workspace package manager for the monorepo"
+      - name: changesets
+        rationale: "Version bumping and changelog generation"
+      - name: tsup
+        rationale: "Bundler for individual SDK packages"
+      - name: vitest
+        rationale: "Unit and integration testing"
+
+  boundaries:
+    - scope: "Maintenance of the Vercel AI SDK monorepo and its provider adapters."
+      out_of_scope: "Hosting or billing concerns for vercel.com — those belong to the platform team."
+    - scope: "Illustrative example apps shipped alongside SDK packages."
+      out_of_scope: "Long-running training jobs or fine-tuning workflows."

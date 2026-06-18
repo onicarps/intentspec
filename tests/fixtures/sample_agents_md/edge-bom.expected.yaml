@@ -1,0 +1,31 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: bom-prefixed-agent
+  type: custom
+  description: "An agent specification whose file begins with a UTF-8 byte-order mark to exercise BOM-tolerant readers."
+
+intent:
+  goals:
+    - description: "Verify the converter strips the BOM before kebab-casing the H1 into agent.name."
+      priority: medium
+    - description: "Confirm extraction is byte-equal to a BOM-less twin file once both pass through yaml.safe_load."
+      priority: medium
+
+  constraints:
+    - rule: "MUST decode the source file with utf-8-sig so the BOM is removed before tokenisation."
+      enforceable: true
+    - rule: "ALWAYS preserve the agent.name as plain ASCII without any leading invisible characters."
+      enforceable: true
+
+  non_negotiables:
+    - rule: "NEVER emit a YAML output that itself begins with a BOM."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: python3
+        rationale: "Reference interpreter for BOM-aware decoding"
+      - name: iconv
+        rationale: "Optional fallback to normalise stray encodings"

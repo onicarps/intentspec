@@ -1,0 +1,45 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: api-spec-auditor
+  type: custom
+  description: "Audits OpenAPI specs against an organisation's REST guidelines and flags drift."
+
+intent:
+  goals:
+    - description: "Flag every endpoint missing a 4xx error schema or a 5xx fallback."
+      priority: medium
+    - description: "Surface naming-convention drift (kebab-case paths, camelCase JSON fields)."
+      priority: medium
+    - description: "Produce a deterministic markdown report that diffs cleanly across runs."
+      priority: medium
+
+  constraints:
+    - rule: "MUST consume OpenAPI 3.0 and 3.1 documents without round-tripping through extra tooling."
+      enforceable: true
+    - rule: "MUST emit a non-zero exit code when severity-error issues remain unresolved."
+      enforceable: true
+    - rule: "ALWAYS resolve `$ref` chains before applying naming rules."
+      enforceable: true
+    - rule: "Prefer suggested fixes over hard failures when the guideline allows it."
+      enforceable: false
+    - rule: "DO NOT mutate the source document; produce a side-by-side report instead."
+      enforceable: true
+
+  non_negotiables:
+    - rule: "Under no circumstances ship breaking-change advice without a maintainer's review."
+      severity: hard
+    - rule: "Never include real authentication tokens in example payloads."
+      severity: hard
+    - rule: "Treat undocumented endpoints as severity-error rather than warning."
+      severity: soft
+    - rule: "The auditor is best-effort on vendor extensions (`x-*`) and skips them with an info note."
+      severity: soft
+
+metadata:
+  tags:
+    - api
+    - governance
+    - openapi
+    - v1.4.0

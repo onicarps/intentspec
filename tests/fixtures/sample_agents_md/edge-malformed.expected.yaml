@@ -1,0 +1,34 @@
+# Ground truth for benchmark — do not auto-generate
+# Source contains an unterminated fenced code block, mixed bullet markers, and
+# stray punctuation. An ideal converter still extracts the H1, the description
+# paragraph, the keyword-anchored constraints, and the explicit non-negotiable.
+version: "1.0"
+
+agent:
+  name: malformed-markdown-agent
+  type: custom
+  description: "This fixture intentionally breaks several markdown invariants so that the parser must tolerate them without raising a Python traceback."
+
+intent:
+  goals:
+    - description: "Survive an unterminated fenced code block without losing the surrounding sections."
+      priority: medium
+    - description: "Tolerate unbalanced list indentation and mixed CRLF/LF line endings."
+      priority: medium
+
+  constraints:
+    - rule: "MUST not crash on broken fences or stray backticks."
+      enforceable: true
+    - rule: "DO NOT swallow exceptions; convert them into structured warnings."
+      enforceable: true
+    - rule: "ALWAYS keep emitting the rest of the document after a parser hiccup."
+      enforceable: true
+
+  non_negotiables:
+    - rule: "NEVER let a markdown parsing error escape as an unhandled exception."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: python3
+        rationale: "Reference interpreter for fault-tolerant parsing"

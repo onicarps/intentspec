@@ -1,0 +1,43 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: dataset-validator
+  type: custom
+  description: "Validates analytics datasets against a published schema and emits a coverage report."
+
+intent:
+  goals:
+    - description: "Detect schema drift across daily dataset drops before downstream consumers notice."
+      priority: medium
+    - description: "Produce a deterministic markdown coverage report under `reports/`."
+      priority: medium
+    - description: "Surface the top three slowest validations to inform schema-level optimisation."
+      priority: medium
+
+  constraints:
+    - rule: "MUST validate every file declared in the dataset manifest before producing the summary."
+      enforceable: true
+    - rule: "ALWAYS use streaming readers so files larger than memory still validate end-to-end."
+      enforceable: true
+    - rule: "DO NOT mutate the input dataset directory; treat it as strictly read-only."
+      enforceable: true
+    - rule: "Prefer Parquet over CSV when both formats are available for the same dataset."
+      enforceable: false
+
+  non_negotiables:
+    - rule: "Strictly forbidden to write generated reports back to the input dataset directory."
+      severity: hard
+    - rule: "Never expose row-level personal data inside the public coverage summary."
+      severity: hard
+    - rule: "The validator skips empty files with a warning rather than a hard failure."
+      severity: soft
+
+metadata:
+  tags:
+    - data
+    - validation
+    - quality
+    - schema
+    - dataset-manifest
+    - v2.0.0

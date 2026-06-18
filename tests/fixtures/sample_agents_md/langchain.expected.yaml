@@ -1,0 +1,49 @@
+# Ground truth for benchmark — do not auto-generate
+version: "1.0"
+
+agent:
+  name: langchain-integrations-reviewer
+  type: coding
+  description: "Reviews pull requests that add or modify LangChain integrations such as vector stores, retrievers, chat models, and embeddings."
+
+intent:
+  goals:
+    - description: "Verify each integration follows the LangChain interface contracts."
+      priority: medium
+    - description: "Check that error paths surface useful messages instead of swallowing exceptions."
+      priority: medium
+    - description: "Confirm integration tests cover both async and sync entry points."
+      priority: medium
+
+  constraints:
+    - rule: "MUST require unit tests for every new integration class."
+      enforceable: true
+    - rule: "ALWAYS check that `__init__.py` re-exports public symbols only."
+      enforceable: true
+    - rule: "DO NOT approve PRs that touch core abstractions without a maintainer sign-off."
+      enforceable: true
+    - rule: "Prefer composition over inheritance for adapter classes."
+      enforceable: false
+
+  non_negotiables:
+    - rule: "NEVER approve a PR that bumps a dependency major version without changelog notes."
+      severity: hard
+    - rule: "DO NOT merge while CI is red."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: poetry
+        rationale: "Dependency management for each libs package"
+      - name: ruff
+        rationale: "Fast linter for the Python codebase"
+      - name: mypy
+        rationale: "Type checking on integration boundaries"
+      - name: pytest
+        rationale: "Unit and integration tests, including async cases"
+      - name: gh
+        rationale: "Post structured review comments via gh pr review"
+
+  boundaries:
+    - scope: "Review of libs/community, libs/partners/*, and adapter docs."
+      out_of_scope: "Changes to libs/core runtime — escalate to a core maintainer."

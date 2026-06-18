@@ -1,0 +1,33 @@
+# Ground truth for benchmark — do not auto-generate
+# Local fields are taken from edge-recursive.md itself; the recursive-reference
+# walker is expected to also merge fields from the referenced sibling
+# (kubernetes.md) at depth 1, but only the locally-anchored fields are scored
+# here so the sibling's content can evolve independently.
+version: "1.0"
+
+agent:
+  name: recursive-reference-agent
+  type: custom
+  description: "A short companion fixture that delegates most of its rules to a sibling AGENTS.md to exercise the recursive-reference walker."
+
+intent:
+  goals:
+    - description: "Demonstrate that the converter follows a single sibling reference and merges its fields."
+      priority: medium
+    - description: "Keep the local file deliberately sparse so the merged output is dominated by the referenced sibling."
+      priority: medium
+
+  constraints:
+    - rule: "MUST verify the sibling file is in the same fixture directory before following the reference."
+      enforceable: true
+    - rule: "ALWAYS lower confidence by 0.10 for fields imported from a referenced file."
+      enforceable: true
+
+  non_negotiables:
+    - rule: "NEVER follow more than two levels of references in a single parse."
+      severity: hard
+
+  tools:
+    allowed:
+      - name: python3
+        rationale: "Reference interpreter for the recursive walker"
