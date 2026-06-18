@@ -1,0 +1,20 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Coverage
+.coverage
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Testing
+.pytest_cache/
+
+# IntentSpec config/cache
+.intentspec/
