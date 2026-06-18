@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-from intentspec.spec.schema import INTENT_SCHEMA_V1
 
 
 class IntentValidationError(Exception):

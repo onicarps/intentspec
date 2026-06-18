@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 import jsonschema
 
-from intentspec.models.intent import Intent, IntentValidationError
+from intentspec.models.intent import Intent
 from intentspec.spec.schema import INTENT_SCHEMA_V1
 
 

@@ -70,7 +70,7 @@ def test_emit_full_intent_round_trip():
 def test_emit_lists_per_entry_comments():
     result = _full_result()
     text = to_intent_yaml(result, "AGENTS.md")
-    matched = [l for l in text.splitlines() if l.lstrip().startswith("- description:")]
+    matched = [line for line in text.splitlines() if line.lstrip().startswith("- description:")]
     assert any("0.80" in line for line in matched)
 
 
@@ -84,7 +84,7 @@ def test_emit_long_snippet_truncated_in_comment():
         format="agents_md",
     )
     text = to_intent_yaml(pr, "x.md")
-    line = next(l for l in text.splitlines() if "name:" in l and "agent" not in l.split(":")[0])
+    line = next(ln for ln in text.splitlines() if "name:" in ln and "agent" not in ln.split(":")[0])
     assert "..." in line
 
 

@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import click
-import yaml
 
 from intentspec.converter import parse as converter_parse
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml

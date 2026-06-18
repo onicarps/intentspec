@@ -8,17 +8,14 @@ assertions which belong to other features).
 
 from __future__ import annotations
 
-import os
 import subprocess
 import tempfile
 from pathlib import Path
 
-import pytest
 import yaml
 
 from intentspec.converter import parse
 from intentspec.converter.agents_md import parse_agents_md
-from intentspec.converter.types import ConverterError
 
 FIXTURES = Path(__file__).parent / "fixtures" / "sample_agents_md"
 
@@ -564,7 +561,7 @@ class TestCLIIntegration:
             return orig(*a, **kw)
 
         monkeypatch.setattr(urllib.request, "urlopen", _spy)
-        r = parse_agents_md(_fixture("kubernetes.md"))
+        parse_agents_md(_fixture("kubernetes.md"))
         assert len(calls) == 0
 
     def test_format_detected_as_agents_md(self):
@@ -596,5 +593,5 @@ class TestYAMLSafety:
             text=True,
         )
         lines = proc.stdout.strip().split("\n") if proc.stdout.strip() else []
-        unsafe = [l for l in lines if "safe_load" not in l]
+        unsafe = [line for line in lines if "safe_load" not in line]
         assert not unsafe, f"Unsafe yaml.load calls found: {unsafe}"

@@ -45,7 +45,7 @@ def test_init_no_source_no_quickstart_exits_one():
 
 def test_init_writes_intent_yaml_to_default_path(tmp_path):
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as fs:
+    with runner.isolated_filesystem(temp_dir=tmp_path):
         src = "AGENTS.md"
         with open(src, "w", encoding="utf-8") as f:
             f.write(_FIXTURE_AGENTS_MD)
@@ -57,7 +57,7 @@ def test_init_writes_intent_yaml_to_default_path(tmp_path):
 
 def test_init_output_dash_writes_to_stdout(tmp_path):
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path) as fs:
+    with runner.isolated_filesystem(temp_dir=tmp_path):
         src = "AGENTS.md"
         with open(src, "w", encoding="utf-8") as f:
             f.write(_FIXTURE_AGENTS_MD)
@@ -129,9 +129,9 @@ def test_init_emits_provenance_header(tmp_path):
         from pathlib import Path
         text = Path("out.yaml").read_text(encoding="utf-8")
         head = text.splitlines()[:6]
-        assert any(l.startswith("# Source:") for l in head)
-        assert any(l.startswith("# Format:") for l in head)
-        assert any(l.startswith("# Confidence:") for l in head)
+        assert any(line.startswith("# Source:") for line in head)
+        assert any(line.startswith("# Format:") for line in head)
+        assert any(line.startswith("# Confidence:") for line in head)
 
 
 def test_init_deterministic_output(tmp_path):

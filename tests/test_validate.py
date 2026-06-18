@@ -1,12 +1,10 @@
 """Tests for validate command + schema + config."""
 
-import json
 from pathlib import Path
 
 import pytest
 
 from intentspec.models.intent import Intent, IntentValidationError
-from intentspec.spec.schema import INTENT_SCHEMA_V1
 from intentspec.spec.validate import validate_schema, validate_semantic, validate_file
 
 
@@ -18,7 +16,7 @@ class TestSchemaValidation:
 
     def test_valid_intent(self):
         path = FIXTURES / "valid_intent.yaml"
-        intent = Intent.from_file(path)
+        Intent.from_file(path)  # verify no exception
         raw = self._load_raw(path)
         errors = validate_schema(raw)
         assert len(errors) == 0

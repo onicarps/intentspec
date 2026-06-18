@@ -117,7 +117,7 @@ def test_emit_includes_warning_in_provenance():
 def test_emit_lists_low_confidence_fields_for_review():
     result = _make_result()
     text = to_intent_yaml(result, "src.md")
-    review_line = next((l for l in text.splitlines() if "Fields requiring review" in l), None)
+    review_line = next((line for line in text.splitlines() if "Fields requiring review" in line), None)
     assert review_line is not None
     assert "agent.description" in review_line
 
@@ -145,5 +145,5 @@ def test_emit_includes_per_field_comment_for_all_populated_keys():
     text = to_intent_yaml(result, "src.md")
     for path, conf in result.confidences.items():
         last_segment = path.split(".")[-1]
-        matching = [l for l in text.splitlines() if l.lstrip().startswith(f"{last_segment}:")]
+        matching = [line for line in text.splitlines() if line.lstrip().startswith(f"{last_segment}:")]
         assert any("confidence:" in line for line in matching), f"missing comment for {path}"
