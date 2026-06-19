@@ -8,7 +8,9 @@ import sys
 from pathlib import Path
 
 import click
+from click.core import ParameterSource
 
+from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, run_ci
 from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
 from intentspec.converter.types import ConverterError, ParseResult
@@ -437,15 +439,60 @@ def diff(path: str, semantic: bool, from_commit: str | None, output_format: str)
 
 
 @main.command()
-@click.option("--min-coverage", type=int, default=0, help="Minimum coverage threshold")
-@click.option("--strict", is_flag=True, help="Fail on warnings")
+@click.argument("paths", type=click.Path(), nargs=-1)
+@click.option("--min-coverage", type=click.IntRange(0, 100), default=0, help="Minimum coverage threshold (0-100)")
+@click.option("--strict", is_flag=True, default=False, help="Fail on warnings too")
+@click.option("--config", "config_path", type=click.Path(), default=None, help="Path to a .intentspec.yaml config file")
 @click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
-def ci(min_coverage: int, strict: bool, output_format: str):
-    """CI/CD hook — validate and score intent specs.
+@click.pass_context
+def ci(
+    ctx: click.Context,
+    paths: tuple[str, ...],
+    min_coverage: int,
+    strict: bool,
+    config_path: str | None,
+    output_format: str,
+):
+    """CI/CD hook — aggregate validate, lint, score, and coverage checks.
 
-    Returns exit code 0 (pass), 1 (validation error), 2 (warning), or 3 (below threshold).
+    PATHS are the files or directories to check (directories glob **/intent.yaml).
+    Defaults to the current directory when none are given.
+
+    Returns exit code 0 (pass), 1 (validation error), 2 (warning), or 3 (fatal:
+    missing spec, coverage below threshold, or bad config).
     """
-    click.echo("ci: not yet implemented")
+    targets = list(paths) if paths else ["."]
+
+    def _passed(name: str) -> bool:
+        return ctx.get_parameter_source(name) == ParameterSource.COMMANDLINE
+
+    try:
+        config = load_ci_config(config_path)
+        settings = resolve_ci_settings(
+            config,
+            cli_min_coverage=min_coverage if _passed("min_coverage") else None,
+            cli_strict=strict if _passed("strict") else None,
+            cli_format=output_format if _passed("output_format") else None,
+        )
+    except CiConfigError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(3)
+
+    result = run_ci(
+        targets,
+        min_coverage=settings.min_coverage,
+        strict=settings.strict,
+        output_format=settings.output_format,
+    )
+
+    if settings.output_format == "json":
+        click.echo(result.to_json())
+    elif settings.output_format == "yaml":
+        click.echo(result.to_yaml())
+    else:
+        click.echo(result.to_text(use_color=sys.stdout.isatty()))
+
+    sys.exit(result.exit_code)
 
 
 @main.command()

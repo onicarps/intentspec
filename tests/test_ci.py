@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
+from intentspec.cli import main
 from intentspec.ci import (
     CiCheckResult,
     CiConfigError,
@@ -556,3 +558,207 @@ def test_resolve_invalid_config_min_coverage_raises() -> None:
 def test_resolve_invalid_config_format_raises() -> None:
     with pytest.raises(CiConfigError):
         resolve_ci_settings({"format": "xml"}, env={})
+
+
+# --- CLI surface (end-to-end via click.testing.CliRunner) -------------------------
+
+
+@pytest.fixture
+def runner(monkeypatch) -> CliRunner:
+    """A CliRunner with the INTENTSPEC_* env vars cleared for determinism."""
+    for name in ("INTENTSPEC_MIN_COVERAGE", "INTENTSPEC_STRICT", "INTENTSPEC_FORMAT"):
+        monkeypatch.delenv(name, raising=False)
+    return CliRunner()
+
+
+def _copy_valid(dirpath: Path, name: str = "intent.yaml") -> Path:
+    path = dirpath / name
+    path.write_text(Path(VALID).read_text(encoding="utf-8"), encoding="utf-8")
+    return path
+
+
+def test_cli_group_help_lists_ci(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["--help"])
+    assert result.exit_code == 0
+    assert "ci" in result.output
+
+
+def test_cli_ci_help_shows_paths_and_all_options(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", "--help"])
+    assert result.exit_code == 0
+    assert "PATHS" in result.output
+    for option in ("--min-coverage", "--strict", "--config", "--format"):
+        assert option in result.output
+
+
+def test_cli_rejects_out_of_range_min_coverage(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", VALID, "--min-coverage", "150"])
+    assert result.exit_code == 2  # Click usage error
+    assert "150" in result.output
+
+
+def test_cli_rejects_invalid_format(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", VALID, "--format", "xml"])
+    assert result.exit_code == 2  # Click usage error
+    assert "xml" in result.output
+    assert "text" in result.output  # lists valid choices
+
+
+def test_cli_valid_spec_exits_0(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", VALID])
+    assert result.exit_code == 0
+    assert result.output.strip()
+
+
+def test_cli_invalid_spec_exits_1(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", INVALID])
+    assert result.exit_code == 1
+
+
+def test_cli_default_path_behaves_like_dot(runner: CliRunner, tmp_path: Path) -> None:
+    _copy_valid(tmp_path)
+    with runner.isolated_filesystem(temp_dir=tmp_path) as cwd:
+        _copy_valid(Path(cwd))
+        no_arg = runner.invoke(main, ["ci"])
+        dot_arg = runner.invoke(main, ["ci", "."])
+    assert no_arg.exit_code == dot_arg.exit_code == 0
+    assert no_arg.output == dot_arg.output
+
+
+def test_cli_directory_globbing(runner: CliRunner, tmp_path: Path) -> None:
+    nested = tmp_path / "svc"
+    nested.mkdir()
+    _copy_valid(tmp_path)
+    _copy_valid(nested)
+    result = runner.invoke(main, ["ci", str(tmp_path), "--format", "json"])
+    assert result.exit_code == 0
+    parsed = json.loads(result.output)
+    assert len(parsed["files"]) == 2
+
+
+def test_cli_empty_directory_exits_0(runner: CliRunner, tmp_path: Path) -> None:
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    result = runner.invoke(main, ["ci", str(empty), "--format", "json"])
+    assert result.exit_code == 0
+    assert json.loads(result.output)["files"] == []
+
+
+def test_cli_text_format_is_default_and_human_readable(runner: CliRunner) -> None:
+    explicit = runner.invoke(main, ["ci", VALID, "--format", "text"])
+    default = runner.invoke(main, ["ci", VALID])
+    assert default.output == explicit.output
+    assert "\x1b[" not in default.output  # no ANSI when not a TTY
+    # not a single JSON object
+    with pytest.raises(json.JSONDecodeError):
+        json.loads(default.output)
+
+
+def test_cli_json_format_emits_parseable_object(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", VALID, "--format", "json"])
+    assert result.exit_code == 0
+    parsed = json.loads(result.output)
+    for key in ("exit_code", "min_coverage", "strict", "files"):
+        assert key in parsed
+    entry = parsed["files"][0]
+    for key in (
+        "path",
+        "exit_code",
+        "schema_errors",
+        "semantic_warnings",
+        "lint_errors",
+        "lint_warnings",
+        "score",
+        "coverage",
+        "coverage_below_threshold",
+        "error",
+    ):
+        assert key in entry
+
+
+def test_cli_yaml_format_matches_json(runner: CliRunner) -> None:
+    json_result = runner.invoke(main, ["ci", VALID, "--format", "json"])
+    yaml_result = runner.invoke(main, ["ci", VALID, "--format", "yaml"])
+    assert yaml_result.exit_code == 0
+    assert yaml.safe_load(yaml_result.output) == json.loads(json_result.output)
+
+
+def test_cli_below_threshold_exits_3(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", VALID, "--min-coverage", "100"])
+    assert result.exit_code == 3
+
+
+def test_cli_resolved_values_in_json_output(runner: CliRunner) -> None:
+    result = runner.invoke(
+        main, ["ci", VALID, "--format", "json", "--strict", "--min-coverage", "25"]
+    )
+    parsed = json.loads(result.output)
+    assert parsed["strict"] is True
+    assert parsed["min_coverage"] == 25
+
+
+def test_cli_missing_file_exits_3_no_traceback(runner: CliRunner) -> None:
+    result = runner.invoke(main, ["ci", str(FIXTURE_DIR / "does_not_exist.yaml")])
+    assert result.exit_code == 3
+    assert "Traceback" not in result.output
+
+
+def test_cli_bad_config_exits_3_with_message(runner: CliRunner, tmp_path: Path) -> None:
+    missing = tmp_path / "nope.yaml"
+    result = runner.invoke(main, ["ci", VALID, "--config", str(missing)])
+    assert result.exit_code == 3
+    assert "nope.yaml" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_cli_malformed_config_exits_3(runner: CliRunner, tmp_path: Path) -> None:
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("min_coverage: [unclosed\n", encoding="utf-8")
+    result = runner.invoke(main, ["ci", VALID, "--config", str(bad)])
+    assert result.exit_code == 3
+    assert "Traceback" not in result.output
+
+
+def test_cli_config_min_coverage_takes_effect(runner: CliRunner, tmp_path: Path) -> None:
+    spec = _copy_valid(tmp_path)
+    cfg = tmp_path / "ci.yaml"
+    cfg.write_text("min_coverage: 100\n", encoding="utf-8")
+    result = runner.invoke(main, ["ci", str(spec), "--config", str(cfg)])
+    assert result.exit_code == 3  # config threshold applied, no CLI flag passed
+
+
+def test_cli_flag_overrides_config(runner: CliRunner, tmp_path: Path) -> None:
+    spec = _copy_valid(tmp_path)
+    cfg = tmp_path / "ci.yaml"
+    cfg.write_text("min_coverage: 100\n", encoding="utf-8")
+    result = runner.invoke(
+        main, ["ci", str(spec), "--config", str(cfg), "--min-coverage", "0"]
+    )
+    assert result.exit_code == 0  # explicit flag beats config
+
+
+def test_cli_env_overrides_config(runner: CliRunner, tmp_path: Path) -> None:
+    spec = _copy_valid(tmp_path)
+    cfg = tmp_path / "ci.yaml"
+    cfg.write_text("min_coverage: 0\n", encoding="utf-8")
+    result = runner.invoke(
+        main,
+        ["ci", str(spec), "--config", str(cfg)],
+        env={"INTENTSPEC_MIN_COVERAGE": "100"},
+    )
+    assert result.exit_code == 3  # env beats config
+
+
+def test_cli_auto_discovers_config_in_cwd(runner: CliRunner, tmp_path: Path) -> None:
+    with runner.isolated_filesystem(temp_dir=tmp_path) as cwd:
+        _copy_valid(Path(cwd))
+        Path(cwd, ".intentspec.yaml").write_text("min_coverage: 100\n", encoding="utf-8")
+        result = runner.invoke(main, ["ci", "intent.yaml"])
+    assert result.exit_code == 3
+
+
+def test_cli_idempotent_output(runner: CliRunner) -> None:
+    a = runner.invoke(main, ["ci", VALID, INVALID, "--format", "json"])
+    b = runner.invoke(main, ["ci", VALID, INVALID, "--format", "json"])
+    assert a.output == b.output
+    assert a.exit_code == b.exit_code
