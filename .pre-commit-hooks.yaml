@@ -1,0 +1,9 @@
+# IntentSpec pre-commit hooks
+# See https://pre-commit.com for documentation
+
+- id: intentspec-ci
+  name: IntentSpec CI
+  entry: intentspec ci
+  language: python
+  files: 'intent\.yaml$'
+  pass_filenames: true

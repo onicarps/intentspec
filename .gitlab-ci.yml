@@ -1,0 +1,11 @@
+# IntentSpec CI — GitLab CI/CD example
+# Runs 'intentspec ci' and relies on its exit code for pass/fail.
+# Exit codes: 0 = pass, 1 = validation error, 2 = warning, 3 = fatal (missing spec / below threshold)
+
+intentspec-ci:
+  stage: test
+  image: python:3.11
+  before_script:
+    - pip install intentspec
+  script:
+    - intentspec ci
