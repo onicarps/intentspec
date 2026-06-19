@@ -21,7 +21,7 @@ from typing import Any
 
 import yaml
 
-from intentspec.converter.types import FieldSource, ParseResult
+from intentspec.converter.types import ParseResult
 from intentspec.models.intent import (
     AgentMetadata,
     Boundary,
@@ -29,7 +29,6 @@ from intentspec.models.intent import (
     FailureMode,
     Goal,
     Intent,
-    NonNegotiable,
     ToolPermission,
 )
 
