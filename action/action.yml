@@ -1,0 +1,67 @@
+name: "IntentSpec CI"
+description: "Run intentspec ci and post a PR comment with the score and coverage"
+inputs:
+  path:
+    description: "File or directory to check (directories glob **/intent.yaml)"
+    default: "."
+    required: false
+  min-coverage:
+    description: "Minimum coverage threshold (0-100). Exit 3 if below."
+    default: "0"
+    required: false
+  strict:
+    description: "Fail on warnings too (promotes exit code 2 to 1)"
+    default: "false"
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: Install intentspec
+      shell: bash
+      run: pip install intentspec
+
+    - name: Run intentspec ci
+      id: ci
+      shell: bash
+      run: |
+        STRICT_FLAG=""
+        if [ "${{ inputs.strict }}" = "true" ]; then
+          STRICT_FLAG="--strict"
+        fi
+
+        OUTPUT=$(intentspec ci "${{ inputs.path }}" \
+          --min-coverage "${{ inputs.min-coverage }}" \
+          $STRICT_FLAG \
+          --format json)
+
+        echo "result<<EOF" >> "$GITHUB_OUTPUT"
+        echo "$OUTPUT" >> "$GITHUB_OUTPUT"
+        echo "EOF" >> "$GITHUB_OUTPUT"
+
+        # Propagate the intentspec exit code
+        exit_code=$?
+        echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+        exit $exit_code
+
+    - name: Post PR comment with score and coverage
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const result = JSON.parse(`${{ steps.ci.outputs.result }}`);
+          const files = result.files || [];
+          const lines = ['## IntentSpec CI Results'];
+          for (const f of files) {
+            const score = f.score !== null ? `~${Math.round(f.score)}/100` : 'N/A';
+            const coverage = f.coverage !== null ? `${f.coverage}%` : 'N/A';
+            const status = f.exit_code === 0 ? '✅' : f.exit_code === 2 ? '⚠️' : '❌';
+            lines.push(`${status} **${f.path}** — score: ${score}, coverage: ${coverage}`);
+          }
+          lines.push('');
+          lines.push(`Overall exit code: **${result.exit_code}**`);
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: lines.join('\n')
+          });

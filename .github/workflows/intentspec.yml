@@ -1,0 +1,17 @@
+name: IntentSpec CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  intentspec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./action
+        with:
+          path: .
+          min-coverage: "0"
+          strict: "false"
