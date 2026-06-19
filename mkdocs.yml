@@ -1,0 +1,34 @@
+site_name: IntentSpec
+site_description: Coverage and enforcement layer for AI agent infrastructure
+site_url: https://intentspec.readthedocs.io
+repo_url: https://github.com/onicarps/intentspec
+repo_name: onicarps/intentspec
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Commands: commands.md
+  - Schema Reference: schema.md
+  - Examples: examples.md
+  - CI Integration: ci-integration.md
+  - Adapters: adapters.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true

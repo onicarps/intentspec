@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import click
+import yaml
 from click.core import ParameterSource
 
 from intentspec.audit import generate_audit
@@ -211,11 +212,18 @@ def coverage(path: str, output_format: str):
 @click.option(
     "--from",
     "from_format",
-    type=click.Choice(["agents_md", "skill_md", "agentskills"]),
+    type=click.Choice(["agents_md", "skill_md", "agentskills", "crewai"]),
     default=None,
     help="Force input format instead of auto-detecting.",
 )
 @click.option("--quickstart", is_flag=True, default=False, help="Run the 3-question wizard.")
+@click.option(
+    "--template",
+    "template_name",
+    type=str,
+    default=None,
+    help="Use a built-in template (coding-agent, research-agent, service-agent, data-pipeline, multi-agent-coordinator). Use 'list' to see available templates.",
+)
 @click.option("--use-llm", "use_llm", is_flag=True, default=False, help="Augment with OpenRouter LLM (opt-in).")
 @click.option(
     "--output",
@@ -233,6 +241,7 @@ def coverage(path: str, output_format: str):
     help="Run interactive review (default when stdout is a TTY).",
 )
 @click.option("--yes", "-y", "skip_interactive", is_flag=True, default=False, help="Skip interactive review.")
+@click.option("--name", "agent_name_override", type=str, default=None, help="Override agent name (skips prompt).")
 @click.option(
     "--format",
     "output_format",
@@ -246,18 +255,24 @@ def init(
     source: str | None,
     from_format: str | None,
     quickstart: bool,
+    template_name: str | None,
     use_llm: bool,
     output: str,
     interactive: bool,
     skip_interactive: bool,
+    agent_name_override: str | None,
     output_format: str,
     strict: bool,
     force: bool,
 ):
-    """Initialize intent.yaml from an existing agent spec.
+    """Initialize intent.yaml from an existing agent spec or template.
 
     SOURCE is the path to an AGENTS.md, SKILL.md, or an agentskills directory.
     """
+    if template_name is not None:
+        _run_template_init(template_name, output, force, strict, agent_name_override)
+        return
+
     if quickstart:
         result = _run_quickstart_wizard()
         source_label = "quickstart"
@@ -383,6 +398,96 @@ def _run_quickstart_wizard() -> ParseResult:
         answers["tools"] = tools_str
 
     return parse_quickstart(answers)
+
+
+def _run_template_init(
+    template_name: str,
+    output: str,
+    force: bool,
+    strict: bool,
+    agent_name_override: str | None = None,
+) -> None:
+    """Handle --template flag: copy built-in template to output path."""
+    if template_name == "list":
+        _list_templates()
+        sys.exit(0)
+
+    # Check if it looks like a URL
+    if template_name.startswith(("http://", "https://")):
+        click.echo("Community templates coming soon. Use a built-in template name.")
+        click.echo("Run 'intentspec init --template list' to see available templates.")
+        sys.exit(1)
+
+    templates_dir = Path(__file__).parent / "templates"
+    template_path = templates_dir / f"{template_name}.yaml"
+    if not template_path.exists():
+        click.echo(f"Error: unknown template '{template_name}'.", err=True)
+        click.echo("Run 'intentspec init --template list' to see available templates.", err=True)
+        sys.exit(1)
+
+    # Read template
+    template_content = template_path.read_text(encoding="utf-8")
+    data = yaml.safe_load(template_content)
+    if not isinstance(data, dict):
+        click.echo(f"Error: template '{template_name}' is not valid YAML.", err=True)
+        sys.exit(1)
+
+    # Prompt for agent name (or use override)
+    if agent_name_override:
+        agent_name = agent_name_override
+    else:
+        default_name = data.get("agent", {}).get("name", "my-agent")
+        agent_name = click.prompt("Agent name (kebab-case)", default=default_name).strip()
+        if not agent_name:
+            agent_name = default_name
+
+    # Replace agent name in template
+    if "agent" in data:
+        data["agent"]["name"] = agent_name
+
+    # Write output
+    out_path = Path(output)
+    if out_path.exists() and not force:
+        click.echo(f"Error: output path already exists (use --force to overwrite): {out_path}", err=True)
+        sys.exit(1)
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+
+    # Validate
+    intent, errors, warnings = validate_file(out_path)
+    if errors:
+        click.echo(f"Wrote {out_path} (with validation warnings):", err=True)
+        for err in errors:
+            click.echo(f"  validation error: {err}", err=True)
+        if strict:
+            out_path.unlink()
+            sys.exit(1)
+        sys.exit(0)
+
+    click.echo(f"Wrote {out_path}")
+    sys.exit(0)
+
+
+def _list_templates() -> None:
+    """List available built-in templates."""
+    # cli.py is at src/intentspec/cli.py, so templates is at src/intentspec/templates/
+    templates_dir = Path(__file__).parent / "templates"
+    if not templates_dir.exists():
+        click.echo("No templates directory found.")
+        return
+    templates = sorted(templates_dir.glob("*.yaml"))
+    if not templates:
+        click.echo("No templates available.")
+        return
+    click.echo("Available templates:")
+    for t in templates:
+        data = yaml.safe_load(t.read_text(encoding="utf-8"))
+        name = t.stem
+        agent_name = data.get("agent", {}).get("name", "?") if isinstance(data, dict) else "?"
+        agent_type = data.get("agent", {}).get("type", "?") if isinstance(data, dict) else "?"
+        click.echo(f"  {name:30s} type={agent_type:15s} default_name={agent_name}")
 
 
 def _render_output(result, source_label: str, output_format: str) -> str:

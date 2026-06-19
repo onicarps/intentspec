@@ -1,0 +1,9 @@
+# Minimal CrewAI config — 1 agent, 1 task, no tools
+agents:
+  - role: "Simple Agent"
+    backstory: "A basic agent with a single responsibility."
+    allow_delegation: false
+
+tasks:
+  - description: "Do the thing"
+    goal: "Complete the single assigned task"

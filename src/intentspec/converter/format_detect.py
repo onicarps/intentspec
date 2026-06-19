@@ -20,6 +20,7 @@ def detect_format(path: Path | str) -> str:
     """Detect the converter input format for `path`.
 
     Rules (per architecture §3.3):
+      0. If `path` is a file named `crewai.yaml` or `crewai.yml` -> "crewai".
       1. If `path` is a directory containing `SKILL.md` plus any of
          `Resources/`, `Scripts/`, or `References/` -> "agentskills".
       2. If the primary file starts with a YAML frontmatter block (`^---\n`)
@@ -39,6 +40,10 @@ def detect_format(path: Path | str) -> str:
     p = Path(path)
     if not p.exists():
         raise ConverterError(f"Path does not exist: {p}")
+
+    # CrewAI: file named crewai.yaml or crewai.yml
+    if p.is_file() and p.stem.lower() == "crewai" and p.suffix.lower() in (".yaml", ".yml"):
+        return "crewai"
 
     if p.is_dir():
         skill = p / "SKILL.md"

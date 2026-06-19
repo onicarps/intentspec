@@ -1,0 +1,51 @@
+# Complex CrewAI config — 4 agents, multiple tasks, nested tools
+agents:
+  - role: "Project Manager"
+    backstory: "An experienced PM who coordinates teams and tracks deliverables. Manages workflow across all sub-agents."
+    allow_delegation: true
+    tools:
+      - "project_board"
+      - "slack"
+      - "calendar"
+
+  - role: "Senior Developer"
+    backstory: "A senior full-stack developer with expertise in Python, TypeScript, and cloud architecture."
+    allow_delegation: true
+    tools:
+      - "github"
+      - "code_editor"
+      - "terminal"
+      - "docker"
+
+  - role: "Code Reviewer"
+    backstory: "A meticulous reviewer focused on code quality, security, and best practices."
+    allow_delegation: false
+    tools:
+      - "github"
+      - "linter"
+      - "security_scanner"
+
+  - role: "QA Engineer"
+    backstory: "A quality assurance specialist who writes and runs test suites."
+    allow_delegation: false
+    tools:
+      - "test_runner"
+      - "bug_tracker"
+      - "browser"
+
+tasks:
+  - description: "Plan the sprint"
+    goal: "Break down the feature into trackable tasks and assign ownership"
+  - description: "Implement the backend API"
+    goal: "Build a REST API with proper error handling and validation"
+  - description: "Implement the frontend"
+    goal: "Build a responsive React frontend that consumes the API"
+  - description: "Review all code changes"
+    goal: "Ensure code quality, security, and adherence to standards"
+  - description: "Run full test suite"
+    goal: "Achieve 90%+ test coverage and zero critical bugs"
+
+tools:
+  - name: "jira"
+  - name: "confluence"
+  - name: "figma"

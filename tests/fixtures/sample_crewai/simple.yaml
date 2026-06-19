@@ -1,0 +1,20 @@
+# Simple CrewAI config — 2 agents, 2 tasks
+agents:
+  - role: "Researcher"
+    backstory: "An expert researcher who finds and synthesizes information from multiple sources."
+    allow_delegation: false
+    tools:
+      - "web_search"
+      - "file_reader"
+
+  - role: "Writer"
+    backstory: "A skilled writer who produces clear, well-structured reports."
+    allow_delegation: false
+    tools:
+      - "markdown_editor"
+
+tasks:
+  - description: "Research the topic"
+    goal: "Find and synthesize relevant information"
+  - description: "Write the report"
+    goal: "Produce a well-structured report from research findings"

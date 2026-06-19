@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from intentspec.adapters.crewai import parse_crewai
 from intentspec.converter.agents_md import parse_agents_md
 from intentspec.converter.agentskills import parse_agentskills
 from intentspec.converter.format_detect import detect_format
@@ -54,13 +55,15 @@ def parse(
         raise ConverterError(f"Source not found: {p}")
 
     fmt = format if format else detect_format(p)
-    if fmt not in {"agents_md", "skill_md", "agentskills"}:
+    if fmt not in {"agents_md", "skill_md", "agentskills", "crewai"}:
         raise ConverterError(f"Unknown format: {fmt}")
 
     if fmt == "agents_md":
         result = parse_agents_md(p)
     elif fmt == "skill_md":
         result = parse_skill_md(p)
+    elif fmt == "crewai":
+        result = parse_crewai(p)
     else:  # agentskills
         result = parse_agentskills(p)
 
