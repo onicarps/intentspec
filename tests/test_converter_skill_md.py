@@ -9,7 +9,6 @@ import pytest
 from intentspec.converter import parse
 from intentspec.converter.skill_md import parse_skill_md
 from intentspec.converter.types import ConverterError
-from intentspec.spec.validate import validate_file
 
 FIXTURES = Path(__file__).parent / "fixtures" / "sample_skills_md"
 

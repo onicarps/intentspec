@@ -115,7 +115,6 @@ def _call_llm(result: ParseResult, model: str, api_key: str) -> dict[str, str]:
 
     Returns a dict of field_key → extracted_value.
     """
-    from intentspec.models.intent import Goal, Constraint, NonNegotiable
 
     # Build prompt from the source content
     source_text = ""

@@ -6,14 +6,12 @@ Fails CI if accuracy falls below threshold.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from intentspec.converter import parse
-from intentspec.converter.types import ConverterError
 
 _FIXTURES = Path(__file__).parent / "fixtures"
 _THRESHOLD = 0.75

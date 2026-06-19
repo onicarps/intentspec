@@ -15,11 +15,8 @@ import hashlib
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
-from typing import Any
 
-import click
 import yaml
 
 from intentspec.converter import parse as converter_parse

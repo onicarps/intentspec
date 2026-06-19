@@ -10,8 +10,6 @@ import json
 import math
 import time
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -148,7 +146,7 @@ def _calc_freshness(intent: Intent, reference_time: float) -> float:
     """Freshness score (0-1) based on how recently the intent was updated."""
     if intent.metadata.updated:
         try:
-            from datetime import datetime, timezone
+            from datetime import datetime
             updated_str = intent.metadata.updated.replace("Z", "+00:00")
             updated = datetime.fromisoformat(updated_str)
             age_days = (reference_time - updated.timestamp()) / 86400

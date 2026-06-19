@@ -5,13 +5,10 @@ Allows users to review and edit extracted intent before writing to disk.
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 
 import click
 
-from intentspec.converter.types import FieldSource, ParseResult
-from intentspec.models.intent import Intent
+from intentspec.converter.types import ParseResult
 
 
 def review_interactive(result: ParseResult) -> ParseResult:

@@ -6,13 +6,12 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 
 from intentspec.converter.llm_extract import augment
 from intentspec.converter.types import ConverterError, ParseResult
-from intentspec.models.intent import Intent, Constraint, NonNegotiable, ToolPermission
+from intentspec.models.intent import Intent
 
 
 def _make_result(confidences=None, intent=None):
@@ -42,7 +41,7 @@ class TestAugment:
         result = _make_result({"agent.name": 0.90})
         with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}):
             with patch("intentspec.converter.llm_extract._call_llm") as mock_call:
-                augmented = augment(result)
+                augment(result)
                 mock_call.assert_not_called()
 
     def test_low_confidence_triggers_augment(self):
