@@ -10,6 +10,7 @@ from pathlib import Path
 import click
 from click.core import ParameterSource
 
+from intentspec.audit import generate_audit
 from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, run_ci
 from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
@@ -503,7 +504,27 @@ def audit_report(path: str, output_format: str):
 
     PATH is the directory or file to audit. Defaults to current directory.
     """
-    click.echo("audit-report: not yet implemented")
+    target = Path(path)
+    if target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        matches = sorted(Path(f) for f in glob.glob(pattern, recursive=True))
+        if not matches:
+            click.echo(f"Error: no intent.yaml found in {target}", err=True)
+            sys.exit(3)
+        target = matches[0]
+
+    try:
+        rendered = generate_audit(target, output_format=output_format)
+    except IntentValidationError as e:
+        for err in e.errors:
+            click.echo(f"validation error: {err}", err=True)
+        sys.exit(1)
+    except (FileNotFoundError, IsADirectoryError, OSError) as e:
+        click.echo(f"Error: cannot read {target}: {e}", err=True)
+        sys.exit(3)
+
+    click.echo(rendered)
+    sys.exit(0)
 
 
 @main.command()

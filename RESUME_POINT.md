@@ -1,44 +1,44 @@
-# IntentSpec Resume Point — June 19 2026 (W4 Complete)
+# IntentSpec Resume Point — June 20 2026 (W5 In Progress)
 
-## State: Week 4 COMPLETE, ready for Week 5
+## State: Week 5 Droid mission running (launched ~00:15)
 
-### Repo Status
-- github.com/onicarps/intentspec, main branch — up to date, all pushed
-- 334 tests passing (244 W1-3 + 90 CI tests)
-- Last commit: 1e39249 "feat(ci): add docs/ci-integration.md with exit code guide and CI snippets"
+### Droid Mission
+- ID: f428a9bb-63a2-4c10-af74-e2af9c410291
+- State: running
+- Completed: lint-baseline
+- In progress: audit-report
+- Pending: templates, init-template, crewai-adapter, coverage-uplift, docs-and-readme
+- Notify on complete: yes
 
-### Week 4 What Droid Built
-- src/intentspec/ci/__init__.py (339L) — run_ci(), CiResult, CiCheckResult dataclasses
-- src/intentspec/ci/config.py — config loading (.intentspec.yaml), env vars, precedence
-- cli.py updated (560L) — ci command wired with all flags
-- action/action.yml — GitHub Action with PR comment posting
-- .github/workflows/intentspec.yml — example workflow
-- .gitlab-ci.yml — GitLab CI example
-- .pre-commit-hooks.yaml — pre-commit hook
-- docs/ci-integration.md — CI integration guide (7.3KB)
-- tests/test_ci.py — 90 tests covering exit codes, flags, JSON/YAML, idempotency, config
+### To Check Status
+```bash
+cat ~/.factory/missions/f428a9bb-63a2-4c10-af74-e2af9c410291/state.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['state'])"
+cat ~/.factory/missions/f428a9bb-63a2-4c10-af74-e2af9c410291/features.json | python3 -c "import sys,json; [print(f\"[{f.get('status','?'):12s}] {f.get('id','?')}\") for f in json.load(sys.stdin).get('features',[])]"
+cd ~/.hermes/profiles/intentspec/workspace && git log --oneline -10
+python3 -m pytest tests/ -q
+```
 
-### To Resume
-1. cd ~/.hermes/profiles/intentspec/workspace/
-2. pip install -e ".[dev]" --break-system-packages (if needed)
-3. python3 -m pytest tests/ -q → should show 334 passing
-4. Read workspace/plan.md for Week 5 details
+### When Droid Finishes
+1. Review all new code for mechanical bugs
+2. Run full test suite: python3 -m pytest tests/ -q
+3. Run lint: ruff check src/intentspec tests
+4. Run coverage: pytest --cov=src/intentspec --cov-fail-under=88
+5. Test CLI manually: intentspec audit-report, init --template, etc.
+6. Verify mkdocs build: mkdocs build
+7. Commit, push, update memory
 
-### Week 5: Compliance + Templates + CrewAI Adapter + Docs
-- audit-report command (--format json|yaml|text)
-- Report template (SOC 2 / EU AI Act preamble, agent inventory, IDS trend)
-- 2 more templates: data-pipeline.yaml, multi-agent-coordinator.yaml (have 3 of 5)
-- intentspec init --template NAME (copy template, prompt for name)
-- CrewAI adapter: parse crewai.yaml → intent.yaml
-- Documentation site (mkdocs)
-- README with quickstart + badges
+### Week 5 Tasks (if Droid pauses early, complete manually)
+- src/intentspec/audit.py — generate_audit() function
+- src/intentspec/templates/data-pipeline.yaml
+- src/intentspec/templates/multi-agent-coordinator.yaml
+- src/intentspec/adapters/crewai.py — parse_crewai() + wire into converter
+- tests/test_audit.py, test_templates.py, test_adapters.py
+- docs/ mkdocs site + README update
+- Coverage uplift to ≥88%
 
-### Week 5 Gate
-- audit-report generates, GitHub Action works, 5 templates validate
-- CrewAI adapter works on 3+ real configs
-- Docs site works locally, 70+ tests, 88%+ coverage
+### After W5: Week 6-7
+- TestPyPI gate, PyPI publish, beta program (5-10 users)
 
-### Droid
-- Mission 1bb980c9-93bd-4e1c-b359-45024f20c32c (W4 CI/CD) — state: paused
-- Mission 51aae0cd-0ecc-4b91-a724-11d52c1bfdbf (W3 scoring) — state: paused
-- For W5: droid exec --mission --auto high -f workspace/mission_w5_compliance.md
+### Environment
+- Working dir: ~/.hermes/profiles/intentspec/workspace/
+- pip install -e ".[dev]" --break-system-packages
