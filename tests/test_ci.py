@@ -6,9 +6,18 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import pytest
 import yaml
 
-from intentspec.ci import CiCheckResult, CiResult, run_ci
+from intentspec.ci import (
+    CiCheckResult,
+    CiConfigError,
+    CiResult,
+    ResolvedSettings,
+    load_ci_config,
+    resolve_ci_settings,
+    run_ci,
+)
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 VALID = str(FIXTURE_DIR / "valid_intent.yaml")
@@ -320,3 +329,230 @@ def test_statelessness_creates_no_files(tmp_path: Path) -> None:
 def test_run_ci_returns_cicheckresult_instances() -> None:
     result = run_ci([VALID])
     assert all(isinstance(f, CiCheckResult) for f in result.files)
+
+
+# --- Config loading: discovery -----------------------------------------------------
+
+
+def test_load_ci_config_auto_discovers_intentspec_yaml(tmp_path, monkeypatch) -> None:
+    (tmp_path / ".intentspec.yaml").write_text(
+        "min_coverage: 80\nstrict: true\nformat: json\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+    config = load_ci_config()
+    assert config["min_coverage"] == 80
+    assert config["strict"] is True
+    assert config["format"] == "json"
+
+
+def test_load_ci_config_absent_file_returns_empty(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert load_ci_config() == {}
+
+
+def test_load_ci_config_empty_file_returns_empty(tmp_path, monkeypatch) -> None:
+    (tmp_path / ".intentspec.yaml").write_text("", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert load_ci_config() == {}
+
+
+def test_load_ci_config_explicit_path(tmp_path) -> None:
+    custom = tmp_path / "custom.yaml"
+    custom.write_text("min_coverage: 100\n", encoding="utf-8")
+    config = load_ci_config(str(custom))
+    assert config["min_coverage"] == 100
+
+
+def test_load_ci_config_explicit_path_overrides_autodiscovery(tmp_path, monkeypatch) -> None:
+    (tmp_path / ".intentspec.yaml").write_text("min_coverage: 10\n", encoding="utf-8")
+    custom = tmp_path / "custom.yaml"
+    custom.write_text("min_coverage: 90\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert load_ci_config(str(custom))["min_coverage"] == 90
+
+
+def test_load_ci_config_recognizes_each_key(tmp_path) -> None:
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text("min_coverage: 55\nstrict: false\nformat: yaml\n", encoding="utf-8")
+    config = load_ci_config(str(cfg))
+    assert config == {"min_coverage": 55, "strict": False, "format": "yaml"}
+
+
+def test_load_ci_config_ignores_unknown_keys(tmp_path) -> None:
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text(
+        "min_coverage: 30\nunknown_key: surprise\nanother: 1\n", encoding="utf-8"
+    )
+    config = load_ci_config(str(cfg))
+    assert config == {"min_coverage": 30}
+
+
+# --- Config loading: error cases ---------------------------------------------------
+
+
+def test_load_ci_config_missing_explicit_path_raises(tmp_path) -> None:
+    missing = tmp_path / "nope.yaml"
+    with pytest.raises(CiConfigError) as exc:
+        load_ci_config(str(missing))
+    assert "nope.yaml" in str(exc.value)
+
+
+def test_load_ci_config_directory_path_raises(tmp_path) -> None:
+    with pytest.raises(CiConfigError) as exc:
+        load_ci_config(str(tmp_path))
+    assert str(tmp_path) in str(exc.value)
+
+
+def test_load_ci_config_malformed_yaml_raises(tmp_path) -> None:
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("min_coverage: [unclosed\n", encoding="utf-8")
+    with pytest.raises(CiConfigError):
+        load_ci_config(str(bad))
+
+
+def test_load_ci_config_non_mapping_raises(tmp_path) -> None:
+    bad = tmp_path / "list.yaml"
+    bad.write_text("- 1\n- 2\n", encoding="utf-8")
+    with pytest.raises(CiConfigError):
+        load_ci_config(str(bad))
+
+
+# --- Resolution: defaults ----------------------------------------------------------
+
+
+def test_resolve_defaults_when_empty() -> None:
+    settings = resolve_ci_settings({}, env={})
+    assert isinstance(settings, ResolvedSettings)
+    assert settings.min_coverage == 0
+    assert settings.strict is False
+    assert settings.output_format == "text"
+
+
+# --- Resolution: config layer ------------------------------------------------------
+
+
+def test_resolve_config_values_apply() -> None:
+    settings = resolve_ci_settings(
+        {"min_coverage": 70, "strict": True, "format": "json"}, env={}
+    )
+    assert settings.min_coverage == 70
+    assert settings.strict is True
+    assert settings.output_format == "json"
+
+
+# --- Resolution: default-non-clobber ----------------------------------------------
+
+
+def test_resolve_unpassed_flag_does_not_clobber_config() -> None:
+    settings = resolve_ci_settings(
+        {"min_coverage": 100, "strict": True, "format": "json"},
+        cli_min_coverage=None,
+        cli_strict=None,
+        cli_format=None,
+        env={},
+    )
+    assert settings.min_coverage == 100
+    assert settings.strict is True
+    assert settings.output_format == "json"
+
+
+# --- Resolution: precedence chain --------------------------------------------------
+
+
+def test_resolve_min_coverage_precedence_chain() -> None:
+    config = {"min_coverage": 20}
+    env = {"INTENTSPEC_MIN_COVERAGE": "40"}
+    # CLI wins
+    assert resolve_ci_settings(config, cli_min_coverage=80, env=env).min_coverage == 80
+    # env wins over config when no CLI
+    assert resolve_ci_settings(config, env=env).min_coverage == 40
+    # config wins over default when no CLI/env
+    assert resolve_ci_settings(config, env={}).min_coverage == 20
+    # default when nothing set
+    assert resolve_ci_settings({}, env={}).min_coverage == 0
+
+
+def test_resolve_strict_precedence_chain() -> None:
+    config = {"strict": False}
+    env = {"INTENTSPEC_STRICT": "true"}
+    assert resolve_ci_settings(config, cli_strict=True, env=env).strict is True
+    assert resolve_ci_settings(config, env=env).strict is True
+    assert resolve_ci_settings({"strict": True}, env={}).strict is True
+    assert resolve_ci_settings({}, env={}).strict is False
+
+
+def test_resolve_format_precedence_chain() -> None:
+    config = {"format": "json"}
+    env = {"INTENTSPEC_FORMAT": "yaml"}
+    assert resolve_ci_settings(config, cli_format="text", env=env).output_format == "text"
+    assert resolve_ci_settings(config, env=env).output_format == "yaml"
+    assert resolve_ci_settings(config, env={}).output_format == "json"
+    assert resolve_ci_settings({}, env={}).output_format == "text"
+
+
+# --- Resolution: env coercion ------------------------------------------------------
+
+
+def test_resolve_env_min_coverage_coerced_to_int() -> None:
+    assert resolve_ci_settings({}, env={"INTENTSPEC_MIN_COVERAGE": "75"}).min_coverage == 75
+
+
+@pytest.mark.parametrize("value", ["true", "TRUE", "True", "1", "yes", "on"])
+def test_resolve_env_strict_truthy(value: str) -> None:
+    assert resolve_ci_settings({}, env={"INTENTSPEC_STRICT": value}).strict is True
+
+
+@pytest.mark.parametrize("value", ["false", "FALSE", "0", "no", "off"])
+def test_resolve_env_strict_falsy(value: str) -> None:
+    assert resolve_ci_settings({}, env={"INTENTSPEC_STRICT": value}).strict is False
+
+
+def test_resolve_env_format_applies() -> None:
+    assert resolve_ci_settings({}, env={"INTENTSPEC_FORMAT": "json"}).output_format == "json"
+
+
+def test_resolve_empty_env_value_is_ignored() -> None:
+    settings = resolve_ci_settings(
+        {"min_coverage": 33}, env={"INTENTSPEC_MIN_COVERAGE": ""}
+    )
+    assert settings.min_coverage == 33
+
+
+def test_resolve_reads_os_environ_by_default(monkeypatch) -> None:
+    monkeypatch.setenv("INTENTSPEC_MIN_COVERAGE", "62")
+    monkeypatch.setenv("INTENTSPEC_FORMAT", "yaml")
+    settings = resolve_ci_settings({})
+    assert settings.min_coverage == 62
+    assert settings.output_format == "yaml"
+
+
+# --- Resolution: invalid env values raise clear errors (no traceback) -------------
+
+
+@pytest.mark.parametrize("value", ["abc", "150", "-5", "12.5"])
+def test_resolve_invalid_env_min_coverage_raises(value: str) -> None:
+    with pytest.raises(CiConfigError) as exc:
+        resolve_ci_settings({}, env={"INTENTSPEC_MIN_COVERAGE": value})
+    assert "INTENTSPEC_MIN_COVERAGE" in str(exc.value)
+
+
+def test_resolve_invalid_env_strict_raises() -> None:
+    with pytest.raises(CiConfigError) as exc:
+        resolve_ci_settings({}, env={"INTENTSPEC_STRICT": "maybe"})
+    assert "INTENTSPEC_STRICT" in str(exc.value)
+
+
+def test_resolve_invalid_env_format_raises() -> None:
+    with pytest.raises(CiConfigError) as exc:
+        resolve_ci_settings({}, env={"INTENTSPEC_FORMAT": "xml"})
+    assert "INTENTSPEC_FORMAT" in str(exc.value)
+
+
+def test_resolve_invalid_config_min_coverage_raises() -> None:
+    with pytest.raises(CiConfigError):
+        resolve_ci_settings({"min_coverage": "lots"}, env={})
+
+
+def test_resolve_invalid_config_format_raises() -> None:
+    with pytest.raises(CiConfigError):
+        resolve_ci_settings({"format": "xml"}, env={})

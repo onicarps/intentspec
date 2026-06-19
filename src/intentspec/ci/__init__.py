@@ -19,12 +19,28 @@ from typing import Any, Sequence
 
 import yaml
 
+from intentspec.ci.config import (
+    CiConfigError,
+    ResolvedSettings,
+    load_ci_config,
+    resolve_ci_settings,
+)
 from intentspec.coverage import analyze_coverage
 from intentspec.lint import lint_intent
 from intentspec.models.intent import IntentValidationError
 from intentspec.score.ids import compute_ids
 from intentspec.spec.formatter import Formatter
 from intentspec.spec.validate import validate_file
+
+__all__ = [
+    "CiCheckResult",
+    "CiConfigError",
+    "CiResult",
+    "ResolvedSettings",
+    "load_ci_config",
+    "resolve_ci_settings",
+    "run_ci",
+]
 
 # Aggregation rank: pass(0) < warning(2) < error(1) < fatal(3). Numeric codes
 # are intentionally non-monotonic with rank.
