@@ -77,7 +77,7 @@ def review_interactive(result: ParseResult) -> ParseResult:
                 new_constraints.append(constraint)
             elif action == "e":
                 new_rule = click.prompt("  New rule", default=constraint.rule)
-                new_enf = click.prompt("  Enforceable?", type=click.Bool, default=constraint.enforceable)
+                new_enf = click.prompt("  Enforceable?", type=click.BOOL, default=constraint.enforceable)
                 new_constraints.append(constraint.__class__(rule=new_rule, enforceable=new_enf))
         intent.constraints = new_constraints
 

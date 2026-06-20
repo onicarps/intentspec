@@ -25,7 +25,7 @@ __all__ = ["parse_agents_md"]
 _GOALS_TITLES = frozenset({"goals", "purpose", "what you do", "mission", "objectives"})
 _CONSTRAINTS_TITLES = frozenset({"constraints"})
 _NON_NEGOTIABLES_TITLES = frozenset({"non-negotiables", "hard rules"})
-_BOUNDARIES_TITLES = frozenset({"boundaries", "scope", "limitations", "out of scope"})
+_BOUNDARIES_TITLES = frozenset({"boundaries", "scope", "limitations", "out of scope", "out-of-scope"})
 _TOOLS_TITLES = frozenset({"tools", "tech stack", "allowed tools"})
 
 _EMPHATIC_PATTERNS = [
@@ -135,7 +135,7 @@ def _parse_single(p: Path, *, follow_refs: bool = False) -> ParseResult:
     confidences.update(t_confs)
     sources.update(t_srcs)
 
-    boundaries, b_confs, b_srcs = _extract_boundaries(sections, is_non_eng)
+    boundaries, b_confs, b_srcs = _extract_boundaries(sections, is_non_eng, intent.agent_description)
     intent.boundaries = boundaries
     confidences.update(b_confs)
     sources.update(b_srcs)
@@ -577,14 +577,19 @@ def _extract_tools(
         m_intro = _RE_INTRO_VERB.match(stripped)
         if m_intro:
             rest = stripped[m_intro.end():]
-            for m in _RE_CODE_SPAN.finditer(rest):
-                code = m.group(1).strip()
-                if not code or len(code) >= 40:
-                    continue
-                if " " in code:
-                    code = code.split()[0]
-                rationale = f"mentioned in source line {i + 1}"
-                _add(code, rationale, 0.65, i + 1)
+            # Only extract single code spans from intro lines to avoid
+            # picking up casual mentions in prose.
+            code_spans = list(_RE_CODE_SPAN.finditer(rest))
+            # Skip lines with multiple code spans (likely prose mentioning tools)
+            if len(code_spans) != 1:
+                continue
+            code = code_spans[0].group(1).strip()
+            if not code or len(code) >= 40:
+                continue
+            if " " in code:
+                code = code.split()[0]
+            rationale = f"mentioned in source line {i + 1}"
+            _add(code, rationale, 0.65, i + 1)
 
     return tools, confidences, sources
 
@@ -609,6 +614,7 @@ def _extract_tool_from_prose(text: str) -> tuple[str, str]:
 def _extract_boundaries(
     sections: list[tuple[str, int, list[str]]],
     is_non_eng: bool,
+    agent_description: str = "",
 ) -> tuple[list[Boundary], dict[str, float], dict[str, FieldSource]]:
     if is_non_eng:
         return [], {}, {}
@@ -622,9 +628,11 @@ def _extract_boundaries(
     for title, start, body in sections:
         tl = title.lower().strip()
         if tl in _BOUNDARIES_TITLES:
-            is_oos_section = "out of scope" in tl
+            is_oos_section = "out of scope" in tl or "out-of-scope" in tl
             is_is_section = tl == "scope"
             for item_text, item_line_off in _extract_bullets(body):
+                # Strip backtick code spans from boundary text
+                item_text = _RE_CODE_SPAN.sub(r"\1", item_text).strip()
                 low = item_text.lower().strip()
                 line_num = (start + item_line_off) if item_line_off else None
                 if low.startswith("out of scope") or low.startswith("fuera del alcance"):
@@ -641,6 +649,15 @@ def _extract_boundaries(
                 else:
                     in_scope_items.append((item_text, line_num))
 
+    # Derive a meaningful scope from the agent description when we have
+    # out-of-scope items but no explicit in-scope items.
+    derived_scope = ""
+    if out_scope_items and not in_scope_items and agent_description:
+        # Use the first sentence of the description as the scope
+        derived_scope = agent_description.split(".")[0].strip()
+        if len(derived_scope) > 100:
+            derived_scope = derived_scope[:100].rsplit(" ", 1)[0]
+
     max_pairs = max(len(in_scope_items), len(out_scope_items))
     for idx in range(max_pairs):
         in_s = in_scope_items[idx][0] if idx < len(in_scope_items) else ""
@@ -650,7 +667,7 @@ def _extract_boundaries(
         if not in_s and not out_s:
             continue
         if not in_s and out_s:
-            in_s = "Agent's primary domain (see description)"
+            in_s = derived_scope if derived_scope else "Agent's primary domain (see description)"
         boundaries.append(Boundary(scope=in_s, out_of_scope=out_s))
         key = f"intent.boundaries[{len(boundaries) - 1}].scope"
         confidences[key] = 0.75 if in_scope_items else 0.50

@@ -14,7 +14,7 @@ import pytest
 from intentspec.converter import parse
 
 _FIXTURES = Path(__file__).parent / "fixtures"
-_THRESHOLD = 0.75
+_THRESHOLD = 0.85
 
 # Field weights for weighted accuracy
 _FIELD_WEIGHTS = {

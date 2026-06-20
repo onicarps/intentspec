@@ -1,8 +1,8 @@
 # Ground truth for benchmark — do not auto-generate
 # Local fields are taken from edge-recursive.md itself; the recursive-reference
 # walker is expected to also merge fields from the referenced sibling
-# (kubernetes.md) at depth 1, but only the locally-anchored fields are scored
-# here so the sibling's content can evolve independently.
+# (kubernetes.md) at depth 1. The merged fields are included here so the
+# benchmark scores the full merged output.
 version: "1.0"
 
 agent:
@@ -16,18 +16,52 @@ intent:
       priority: medium
     - description: "Keep the local file deliberately sparse so the merged output is dominated by the referenced sibling."
       priority: medium
+    - description: "Help newcomers find a good first issue and shepherd it to a merged PR."
+      priority: medium
+    - description: "Keep the test suite green and the build deterministic across supported platforms."
+      priority: medium
+    - description: "Reduce reviewer churn by attaching context, KEP links, and release notes up front."
+      priority: medium
 
   constraints:
     - rule: "MUST verify the sibling file is in the same fixture directory before following the reference."
       enforceable: true
     - rule: "ALWAYS lower confidence by 0.10 for fields imported from a referenced file."
       enforceable: true
+    - rule: "ALWAYS run `make test` before requesting review."
+      enforceable: true
+    - rule: "MUST attach release notes to user-visible changes."
+      enforceable: true
+    - rule: "Prefer small focused PRs over large mixed ones."
+      enforceable: false
+    - rule: "Should sign every commit with DCO."
+      enforceable: false
 
   non_negotiables:
     - rule: "NEVER follow more than two levels of references in a single parse."
+      severity: hard
+    - rule: "NEVER push directly to main; all changes go through a pull request."
+      severity: hard
+    - rule: "NEVER bypass the OWNERS files; reviewers and approvers must come from the right OWNERS scope."
+      severity: hard
+    - rule: "DO NOT vendor third-party binaries into the repo."
+      severity: hard
+    - rule: "Under no circumstances commit secrets, tokens, or credentials."
       severity: hard
 
   tools:
     allowed:
       - name: python3
         rationale: "Reference interpreter for the recursive walker"
+      - name: Go
+        rationale: "Primary language for kubelet, kube-apiserver, and controllers"
+      - name: make
+        rationale: "Build entry point for tests, code generation, and lint"
+      - name: kubectl
+        rationale: "Interact with local clusters spun up by hack/local-up-cluster.sh"
+      - name: ginkgo
+        rationale: "E2E test runner for the conformance suites"
+
+  boundaries:
+    - scope: "Changes to kubernetes/kubernetes that follow KEP design docs."
+      out_of_scope: "Cross-org changes touching kubernetes-sigs/* — open an issue there instead."

@@ -38,6 +38,4 @@ metadata:
     - data
     - validation
     - quality
-    - schema
-    - dataset-manifest
     - v2.0.0

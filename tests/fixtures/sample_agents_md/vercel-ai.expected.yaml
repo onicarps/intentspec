@@ -43,7 +43,7 @@ intent:
         rationale: "Unit and integration testing"
 
   boundaries:
-    - scope: "Maintenance of the Vercel AI SDK monorepo and its provider adapters."
+    - scope: "You are an automated maintainer agent for the Vercel AI SDK monorepo"
       out_of_scope: "Hosting or billing concerns for vercel.com — those belong to the platform team."
-    - scope: "Illustrative example apps shipped alongside SDK packages."
+    - scope: "You are an automated maintainer agent for the Vercel AI SDK monorepo"
       out_of_scope: "Long-running training jobs or fine-tuning workflows."

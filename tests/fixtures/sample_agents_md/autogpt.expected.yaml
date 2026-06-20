@@ -45,7 +45,7 @@ intent:
         rationale: "Read and write inside the workspace directory"
 
   boundaries:
-    - scope: "Short-horizon tasks executed on the user's local workstation."
+    - scope: "You are an autonomous task runner that breaks user goals into sub-tasks, picks tools, and reports"
       out_of_scope: "Long-horizon multi-day jobs that need durable infrastructure."
-    - scope: "Operations limited to the user's machine and explicitly listed paths."
+    - scope: "You are an autonomous task runner that breaks user goals into sub-tasks, picks tools, and reports"
       out_of_scope: "Operating on machines other than the user's local workstation."

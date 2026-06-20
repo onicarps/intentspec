@@ -1,5 +1,7 @@
+README.md
 pyproject.toml
 src/intentspec/__init__.py
+src/intentspec/audit.py
 src/intentspec/cli.py
 src/intentspec.egg-info/PKG-INFO
 src/intentspec.egg-info/SOURCES.txt
@@ -8,6 +10,7 @@ src/intentspec.egg-info/entry_points.txt
 src/intentspec.egg-info/requires.txt
 src/intentspec.egg-info/top_level.txt
 src/intentspec/adapters/__init__.py
+src/intentspec/adapters/crewai.py
 src/intentspec/ci/__init__.py
 src/intentspec/ci/config.py
 src/intentspec/converter/__init__.py
@@ -31,6 +34,8 @@ src/intentspec/spec/__init__.py
 src/intentspec/spec/formatter.py
 src/intentspec/spec/schema.py
 src/intentspec/spec/validate.py
+tests/test_adapters.py
+tests/test_audit.py
 tests/test_benchmark_converter.py
 tests/test_ci.py
 tests/test_converter_agents_md.py
@@ -44,5 +49,7 @@ tests/test_converter_llm.py
 tests/test_converter_parse.py
 tests/test_converter_skill_md.py
 tests/test_converter_types.py
+tests/test_performance.py
 tests/test_score_ids.py
+tests/test_templates.py
 tests/test_validate.py

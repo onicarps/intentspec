@@ -19,11 +19,6 @@ intent:
     - rule: "Never delete the most recent rotated archive even if the retention window has elapsed."
       severity: hard
 
-  tools:
-    allowed:
-      - name: run
-        rationale: "bundled script"
-
 metadata:
   tags:
     - ops

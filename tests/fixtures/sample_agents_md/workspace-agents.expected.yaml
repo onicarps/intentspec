@@ -45,6 +45,8 @@ intent:
         rationale: "YAML loading via safe_load only"
       - name: jsonschema
         rationale: "Draft-07 schema validation for intent.yaml"
+      - name: intentspec
+        rationale: "Verify every emitted intent.yaml via intentspec validate"
 
   boundaries:
     - scope: "Converter, init command wiring, fixture corpus, accuracy benchmark."
