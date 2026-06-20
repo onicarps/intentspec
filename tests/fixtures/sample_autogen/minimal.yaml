@@ -1,0 +1,5 @@
+# Minimal AutoGen config — 1 agent, minimal config
+agents:
+  - name: "simple_assistant"
+    description: "Answer user questions"
+    system_message: "You are a helpful assistant."

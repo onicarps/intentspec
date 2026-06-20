@@ -1,0 +1,29 @@
+# Simple AutoGen config — 2 agents with system_message
+metadata:
+  name: "Content Generator"
+  description: "A two-agent content generation system using AutoGen"
+  version: "1.0.0"
+
+agents:
+  - name: "researcher"
+    description: "Research trending topics and gather information"
+    system_message: |
+      You are a research assistant. Your role is to gather accurate, up-to-date information on assigned topics.
+      Always cite sources and verify facts before presenting them.
+    tools:
+      - "web_search"
+      - "rss_reader"
+    model: "gpt-4"
+    human_input_mode: "NEVER"
+    max_consecutive_auto_reply: 5
+
+  - name: "writer"
+    description: "Write articles based on research findings"
+    system_message: |
+      You are a professional content writer. Based on the research provided,
+      write clear, engaging articles. Always maintain factual accuracy.
+    tools:
+      - "markdown_editor"
+    model: "gpt-4"
+    human_input_mode: "NEVER"
+    max_consecutive_auto_reply: 5

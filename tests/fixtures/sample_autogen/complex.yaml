@@ -1,0 +1,98 @@
+# Complex AutoGen config — 4+ agents with tools, nested config
+metadata:
+  name: "DevOps Orchestrator"
+  description: "Multi-agent DevOps pipeline with monitoring, deployment, and incident response"
+  version: "2.1.0"
+
+model_config:
+  model: "gpt-4"
+  temperature: 0.3
+  max_tokens: 4096
+
+agents:
+  - name: "monitor_agent"
+    description: "Monitor system health and detect anomalies"
+    system_message: |
+      You are a DevOps monitoring specialist. Continuously monitor system metrics, logs, and alerts.
+      When anomalies are detected, classify them by severity and route to appropriate response agents.
+      Always maintain a record of all detected incidents.
+    tools:
+      - name: "prometheus_api"
+        category: "monitoring"
+      - name: "grafana_dashboard"
+        category: "monitoring"
+      - name: "pagerduty_api"
+        category: "alerting"
+    model: "gpt-4"
+    human_input_mode: "NEVER"
+    max_consecutive_auto_reply: 10
+
+  - name: "deploy_agent"
+    description: "Handle application deployments and rollbacks"
+    system_message: |
+      You are a deployment automation specialist. Manage CI/CD pipelines, execute deployments,
+      and handle rollbacks. Always verify deployment health before marking as complete.
+      Never deploy to production without passing staging tests first.
+    tools:
+      - name: "kubernetes_api"
+        category: "deployment"
+      - name: "helm_cli"
+        category: "deployment"
+      - name: "docker_api"
+        category: "deployment"
+      - name: "git_api"
+        category: "version_control"
+    model: "gpt-4"
+    human_input_mode: "TERMINATE"
+    max_consecutive_auto_reply: 8
+
+  - name: "incident_responder"
+    description: "Respond to production incidents and coordinate fixes"
+    system_message: |
+      You are an incident response coordinator. When a production incident is detected,
+      assess severity, assemble the response team, coordinate remediation efforts,
+      and run post-incident reviews. Always prioritize customer-impacting issues.
+    tools:
+      - name: "pagerduty_api"
+        category: "alerting"
+      - name: "slack_api"
+        category: "communication"
+      - name: "runbook_db"
+        category: "documentation"
+    model: "claude-sonnet"
+    human_input_mode: "ALWAYS"
+    max_consecutive_auto_reply: 15
+
+  - name: "documentation_agent"
+    description: "Update documentation and runbooks after changes"
+    system_message: |
+      You are a technical documentation specialist. After any infrastructure change or
+      incident resolution, update relevant documentation, runbooks, and architecture diagrams.
+      Keep all documentation version-controlled and up-to-date.
+    tools:
+      - name: "markdown_editor"
+        category: "documentation"
+      - name: "git_api"
+        category: "version_control"
+      - name: "confluence_api"
+        category: "documentation"
+    model: "gpt-4"
+    human_input_mode: "NEVER"
+    max_consecutive_auto_reply: 3
+
+  - name: "security_reviewer"
+    description: "Review infrastructure changes for security compliance"
+    system_message: |
+      You are a security compliance reviewer. Review all infrastructure changes, deployment
+      configurations, and access controls for security vulnerabilities. Flag any issues that
+      violate security policies or best practices before giving approval.
+    tools:
+      - name: "vulnerability_scanner"
+        category: "security"
+      - name: "iam_api"
+        category: "security"
+      - name: "compliance_db"
+        category: "security"
+    model: "gpt-4"
+    human_input_mode: "ALWAYS"
+    max_consecutive_auto_reply: 6

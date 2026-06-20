@@ -49,6 +49,10 @@ def detect_format(path: Path | str) -> str:
     if p.is_file() and p.stem.lower() == "langgraph" and p.suffix.lower() in (".yaml", ".yml"):
         return "langgraph"
 
+    # AutoGen: file named autogen-config.yaml or autogen-config.yml
+    if p.is_file() and p.stem.lower() == "autogen-config" and p.suffix.lower() in (".yaml", ".yml"):
+        return "autogen"
+
     if p.is_dir():
         skill = p / "SKILL.md"
         if skill.is_file() and any((p / sub).is_dir() for sub in _AGENTSKILLS_SUBDIRS):

@@ -212,7 +212,7 @@ def coverage(path: str, output_format: str):
 @click.option(
     "--from",
     "from_format",
-    type=click.Choice(["agents_md", "skill_md", "agentskills", "crewai", "langgraph"]),
+    type=click.Choice(["agents_md", "skill_md", "agentskills", "crewai", "langgraph", "autogen"]),
     default=None,
     help="Force input format instead of auto-detecting.",
 )
