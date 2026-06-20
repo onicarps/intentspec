@@ -1,0 +1,10 @@
+# Minimal LangGraph config — 1 node, minimal config
+metadata:
+  name: "Simple Bot"
+
+nodes:
+  - name: "assistant"
+    description: "Answer user questions"
+    type: "agent"
+    tools:
+      - "knowledge_base"

@@ -45,10 +45,15 @@ tests/test_converter_cli_extra.py
 tests/test_converter_emit.py
 tests/test_converter_emit_lists.py
 tests/test_converter_format_detect.py
+tests/test_converter_interactive.py
 tests/test_converter_llm.py
 tests/test_converter_parse.py
 tests/test_converter_skill_md.py
 tests/test_converter_types.py
+tests/test_coverage.py
+tests/test_coverage_uplift.py
+tests/test_diff.py
+tests/test_formatter.py
 tests/test_performance.py
 tests/test_score_ids.py
 tests/test_templates.py

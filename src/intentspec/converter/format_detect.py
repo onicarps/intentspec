@@ -45,6 +45,10 @@ def detect_format(path: Path | str) -> str:
     if p.is_file() and p.stem.lower() == "crewai" and p.suffix.lower() in (".yaml", ".yml"):
         return "crewai"
 
+    # LangGraph: file named langgraph.yaml or langgraph.yml
+    if p.is_file() and p.stem.lower() == "langgraph" and p.suffix.lower() in (".yaml", ".yml"):
+        return "langgraph"
+
     if p.is_dir():
         skill = p / "SKILL.md"
         if skill.is_file() and any((p / sub).is_dir() for sub in _AGENTSKILLS_SUBDIRS):

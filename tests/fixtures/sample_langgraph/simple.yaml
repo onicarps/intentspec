@@ -1,0 +1,51 @@
+# Simple LangGraph config — 3 nodes, basic graph
+metadata:
+  name: "Content Pipeline"
+  description: "A content generation and review pipeline using LangGraph"
+  version: "1.0.0"
+
+nodes:
+  - name: "researcher"
+    description: "Research trending topics and gather source material"
+    type: "agent"
+    tools:
+      - "web_search"
+      - "rss_reader"
+    model: "gpt-4"
+
+  - name: "writer"
+    description: "Write a blog post based on research findings"
+    type: "agent"
+    tools:
+      - "markdown_editor"
+      - "cms_api"
+    model: "gpt-4"
+
+  - name: "reviewer"
+    description: "Review the blog post for quality, SEO, and accuracy"
+    type: "agent"
+    tools:
+      - "grammar_checker"
+      - "seo_analyzer"
+    model: "gpt-4"
+
+edges:
+  - from: "researcher"
+    to: "writer"
+    condition: "research_complete"
+  - from: "writer"
+    to: "reviewer"
+    condition: "draft_ready"
+
+state:
+  schema:
+    fields:
+      - name: "topic"
+        type: "string"
+        description: "The content topic to research and write about"
+      - name: "sources"
+        type: "array"
+        description: "List of source URLs and references"
+      - name: "draft"
+        type: "string"
+        description: "The current blog post draft content"

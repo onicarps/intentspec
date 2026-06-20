@@ -1,0 +1,103 @@
+# Complex LangGraph config — 6 nodes, nested config, conditional routing
+metadata:
+  name: "Customer Support Orchestrator"
+  description: "Multi-agent customer support system with escalation and routing"
+  version: "2.0.0"
+
+nodes:
+  - name: "intent_classifier"
+    description: "Classify incoming support request by intent and urgency"
+    type: "router"
+    priority: "high"
+    tools:
+      - "nlp_engine"
+      - "intent_model"
+    model: "claude-sonnet"
+
+  - name: "billing_agent"
+    description: "Handle billing inquiries, refunds, and payment issues"
+    type: "agent"
+    tools:
+      - "payment_gateway"
+      - "billing_db"
+      - "refund_tool"
+    model: "gpt-4"
+
+  - name: "technical_agent"
+    description: "Resolve technical issues and troubleshooting requests"
+    type: "agent"
+    tools:
+      - "diagnostic_tool"
+      - "knowledge_base"
+      - "remote_access"
+    model: "gpt-4"
+
+  - name: "escalation_router"
+    description: "Route complex cases to human agents or specialized teams"
+    type: "router"
+    priority: "high"
+    tools:
+      - "ticketing_system"
+      - "slack"
+    model: "claude-haiku"
+
+  - name: "quality_reviewer"
+    description: "Review resolved tickets for quality and completeness"
+    type: "agent"
+    tools:
+      - "quality_scorer"
+      - "ticketing_system"
+    model: "gpt-4"
+
+  - name: "feedback_collector"
+    description: "Collect customer feedback after ticket resolution"
+    type: "agent"
+    tools:
+      - "survey_tool"
+      - "crm_api"
+    model: "claude-haiku"
+
+edges:
+  - from: "intent_classifier"
+    to: "billing_agent"
+    condition: "intent == 'billing'"
+  - from: "intent_classifier"
+    to: "technical_agent"
+    condition: "intent == 'technical'"
+  - from: "billing_agent"
+    to: "escalation_router"
+    condition: "complexity > 7"
+  - from: "technical_agent"
+    to: "escalation_router"
+    condition: "complexity > 7"
+  - from: "billing_agent"
+    to: "quality_reviewer"
+    condition: "resolved"
+  - from: "technical_agent"
+    to: "quality_reviewer"
+    condition: "resolved"
+  - from: "quality_reviewer"
+    to: "feedback_collector"
+    condition: "review_complete"
+
+state:
+  schema:
+    fields:
+      - name: "ticket_id"
+        type: "string"
+        description: "Unique ticket identifier"
+      - name: "customer_id"
+        type: "string"
+        description: "Customer account identifier"
+      - name: "intent"
+        type: "string"
+        description: "Classified intent category"
+      - name: "complexity"
+        type: "integer"
+        description: "Issue complexity score 1-10"
+      - name: "resolution"
+        type: "string"
+        description: "Resolution notes and outcome"
+      - name: "satisfaction_score"
+        type: "float"
+        description: "Customer satisfaction rating 0.0-5.0"
