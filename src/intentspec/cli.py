@@ -15,6 +15,12 @@ from intentspec.audit import generate_audit
 from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, run_ci
 from intentspec.drift import run_drift
 from intentspec.health import run_health
+
+try:
+    from intentspec.dashboard import serve as _serve_dashboard
+    _HAS_DASHBOARD = True
+except ImportError:
+    _HAS_DASHBOARD = False
 from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
 from intentspec.converter.types import ConverterError, ParseResult
@@ -724,6 +730,31 @@ def drift(path: str, threshold_days: int, output_format: str):
         click.echo(result.to_text())
 
     sys.exit(1 if result.drifted else 0)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--host", default="127.0.0.1", help="Host to bind to")
+@click.option("--port", type=int, default=8080, help="Port to serve on")
+def dashboard(path: str, host: str, port: int):
+    """Serve the IntentSpec dashboard (FastAPI + Chart.js).
+
+    PATH is the directory to scan. Defaults to current directory.
+
+    Requires: pip install fastapi uvicorn
+    """
+    if not _HAS_DASHBOARD:
+        click.echo(
+            "Error: dashboard requires FastAPI and uvicorn.\n"
+            "Install with: pip install fastapi uvicorn",
+            err=True,
+        )
+        sys.exit(1)
+
+    click.echo(f"Starting IntentSpec dashboard at http://{host}:{port}")
+    click.echo(f"Scanning: {Path(path).resolve()}")
+    click.echo("Press Ctrl+C to stop")
+    _serve_dashboard(path, host=host, port=port)
 
 
 if __name__ == "__main__":
