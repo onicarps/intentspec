@@ -10,30 +10,48 @@ IntentSpec transforms agent development from ad-hoc documentation to versioned, 
 pip install intentspec
 intentspec init --quickstart
 intentspec validate
+intentspec score
+intentspec ci
 ```
+
+## What It Does
+
+1. **Document** — Define agent intent in a structured `intent.yaml`
+2. **Convert** — Import existing AGENTS.md / SKILL.md / CrewAI specs
+3. **Validate** — Schema + semantic checks catch misconfigurations
+4. **Score** — Intent Debt Score (0-100) measures spec quality
+5. **Coverage** — Compare intent against actual source text
+6. **Enforce** — CI/CD integration fails builds when intent is broken
+7. **Audit** — Generate compliance reports for SOC 2 / EU AI Act
 
 ## Features
 
-- **Validate** — Schema + semantic validation of intent.yaml
-- **Score** — Intent Debt Score (IDS 0-100) with 7 weighted components
-- **Coverage** — Structural coverage analysis (tools, goals, constraints, non-negotiables)
-- **Diff** — Git-integrated intent change tracking
-- **Lint** — Quality checks for agent specs
-- **CI** — Unified CI/CD hook with exit codes
-- **Audit Report** — SOC 2 / EU AI Act compliance documents
-- **Convert** — Import from AGENTS.md, SKILL.md, agentskills, CrewAI
-- **Templates** — 5 built-in agent templates
+| Feature | Command | Description |
+|---------|---------|-------------|
+| Validate | `validate` | Schema + semantic validation |
+| Score | `score` | Intent Debt Score (IDS 0-100) |
+| Coverage | `coverage` | Structural coverage analysis |
+| Diff | `diff` | Git-integrated change tracking |
+| Lint | `lint` | Quality checks |
+| CI | `ci` | Unified CI/CD hook |
+| Audit | `audit-report` | Compliance report generation |
+| Convert | `init --from` | Import from 4 source formats |
+| Templates | `init --template` | 5 built-in agent templates |
 
-## Supported Input Formats
+## Input Formats
 
-| Format | Command |
-|--------|---------|
-| AGENTS.md | `intentspec init --from AGENTS.md <path>` |
-| SKILL.md | `intentspec init --from SKILL.md <path>` |
-| agentskills | `intentspec init --from agentskills <path>` |
-| CrewAI | `intentspec init --from crewai.yaml <path>` |
-| Templates | `intentspec init --template <name>` |
+- **AGENTS.md** — Markdown with agent specification
+- **SKILL.md** — Markdown with YAML frontmatter
+- **agentskills** — Directory with SKILL.md + Resources/Scripts/References
+- **CrewAI** — `crewai.yaml` config file
+- **Templates** — Built-in templates for common agent types
 
 ## License
 
 MIT
+
+## Links
+
+- **GitHub:** https://github.com/onicarps/intentspec
+- **Issues:** https://github.com/onicarps/intentspec/issues
+- **Linear:** IntentSpec project (ONI team) — issues ONI-156 to ONI-165
