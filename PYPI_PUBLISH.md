@@ -1,34 +1,40 @@
-# PyPI Publish Checklist
+# PyPI Publish — Using GitHub OIDC (Trusted Publishing)
 
-## Status: BLOCKED — 403 Forbidden
+## Status: READY — GitHub Actions workflow created
 
-## What Works
+## How It Works
+Unlike the old API token approach, this uses GitHub's OIDC provider for authentication.
+No API token needed — GitHub provides a short-lived token to PyPI during the workflow.
+
+## What's Done
+- `.github/workflows/publish.yml` — triggers on tags `v*`, builds + publishes via OIDC
 - Package builds successfully: `python -m build` → wheel (68KB) + sdist
-- All 775 tests pass
-- Package installs locally: `pip install dist/intentspec-0.1.0-py3-none-any.whl`
-- All 11 commands verified working from built wheel
-- Package name `intentspec` is available on PyPI (no existing package)
 
-## What Doesn't Work
-- `twine upload` returns 403 Forbidden
-- Token format is valid (starts with `pypi-`, 120 chars)
-- Token is set as `PYPI_API_TOKEN` environment variable
+## What's Needed
+1. Go to https://pypi.org/manage/account/publishing/
+2. Create a new pending publisher:
+   - **PyPI Project Name:** `intentspec`
+   - **Owner:** `onicarps`
+   - **Repository name:** `intentspec`
+   - **Workflow name:** `publish.yml`
+   - **Environment name:** `pypi`
+3. Push a tag to trigger publish:
+   ```bash
+   cd ~/.hermes/profiles/intentspec/workspace
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
 
-## Root Cause
-The `PYPI_API_TOKEN` environment variable contains a valid-format PyPI API token but it either:
-1. Belongs to a different PyPI account
-2. Has been revoked or expired
-3. Was created without "Upload" scope
-
-## Action Required
-1. Go to https://pypi.org/manage/account/token/
-2. Create a new API token with "Upload" scope for the `intentspec` project
-3. Set the token: `export PYPI_API_TOKEN=pypi-...`
-4. Rebuild: `python -m build`
-5. Publish: `twine upload dist/intentspec-0.1.0-py3-none-any.whl`
-
-## Alternative: TestPyPI First
+## After Publishing
 ```bash
-twine upload --repository testpypi dist/intentspec-0.1.0-py3-none-any.whl
-pip install --index-url https://test.pypi.org/simple/ intentspec
+pip install intentspec
+intentspec --version
 ```
+
+## Why This Works (and API Tokens Don't)
+The `PYPI_API_TOKEN` env var has a valid token but it's either:
+- Scoped to a different PyPI account
+- Missing "Upload" permission
+- Expired/revoked
+
+The OIDC approach doesn't need any token — GitHub and PyPI establish trust via OpenID Connect.
