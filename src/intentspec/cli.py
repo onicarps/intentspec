@@ -13,6 +13,8 @@ from click.core import ParameterSource
 
 from intentspec.audit import generate_audit
 from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, run_ci
+from intentspec.drift import run_drift
+from intentspec.health import run_health
 from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
 from intentspec.converter.types import ConverterError, ParseResult
@@ -680,6 +682,48 @@ def lint(path: str, output_format: str):
             exit_code = 1
 
     sys.exit(exit_code)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--stale-days", type=int, default=30, help="Days before a spec is considered stale")
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def health(path: str, stale_days: int, output_format: str):
+    """Terminal dashboard — coverage trend, stale intents, IDS distribution.
+
+    PATH is the directory or file to scan. Defaults to current directory.
+    """
+    result = run_health(path, stale_days=stale_days)
+
+    if output_format == "json":
+        click.echo(json.dumps(result.to_dict(), indent=2))
+    elif output_format == "yaml":
+        click.echo(yaml.dump(result.to_dict(), default_flow_style=False))
+    else:
+        click.echo(result.to_text())
+
+    sys.exit(0 if result.errors else 0)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--threshold-days", type=int, default=30, help="Days before a spec is considered drifted")
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def drift(path: str, threshold_days: int, output_format: str):
+    """Detect stale intents — compare intent.yaml against git history.
+
+    PATH is the directory or file to scan. Defaults to current directory.
+    """
+    result = run_drift(path, threshold_days=threshold_days)
+
+    if output_format == "json":
+        click.echo(json.dumps(result.to_dict(), indent=2))
+    elif output_format == "yaml":
+        click.echo(yaml.dump(result.to_dict(), default_flow_style=False))
+    else:
+        click.echo(result.to_text())
+
+    sys.exit(1 if result.drifted else 0)
 
 
 if __name__ == "__main__":
