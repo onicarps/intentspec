@@ -1,0 +1,52 @@
+# OpenAI Agents SDK — DevOps Agent
+# Source: https://github.com/openai/openai-agents-python (typical pattern)
+
+agents:
+  - name: "DevOps Engineer"
+    instructions: |
+      You are a DevOps engineer responsible for managing infrastructure, deployments, and monitoring.
+      Your primary goals are:
+      - Ensure system reliability and uptime
+      - Automate deployment pipelines
+      - Monitor system health and respond to incidents
+      - Optimize infrastructure costs
+
+      Always follow these constraints:
+      - Never deploy to production without approval for changes > 10% of infrastructure
+      - Always create rollback plans before making changes
+      - Document all infrastructure changes in the change log
+      - Test all changes in staging before production
+
+    guardrails:
+      input:
+        - type: "keyword_filter"
+          keywords: ["rm -rf", "drop database", "delete production"]
+          action: "block"
+          message: "Potentially destructive command detected. Human approval required."
+      output:
+        - type: "pii_filter"
+          action: "redact"
+          message: "PII detected in output and has been redacted."
+
+    tools:
+      - name: "kubernetes_api"
+        description: "Manage Kubernetes clusters and deployments"
+      - name: "terraform"
+        description: "Manage infrastructure as code"
+      - name: "monitoring_dashboard"
+        description: "View system health and metrics"
+      - name: "incident_manager"
+        description: "Create and track incidents"
+
+    handoffs:
+      - target: "security_team"
+        condition: "Security incident detected"
+        context: "Pass full incident details and affected systems"
+      - target: "engineering_lead"
+        condition: "Infrastructure change > 10% of total"
+        context: "Pass change details and rollback plan"
+
+metadata:
+  version: "2.0"
+  owner: "devops-team"
+  environment: "production"

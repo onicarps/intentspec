@@ -1,0 +1,71 @@
+# LangGraph Customer Support Agent
+# Source: https://github.com/langchain-ai/langgraph (typical pattern)
+
+name: customer-support-graph
+description: "A customer support agent that handles inquiries, escalates complex issues, and maintains conversation context"
+
+nodes:
+  - name: "intent_classifier"
+    description: "Classify customer inquiry intent (billing, technical, general, complaint)"
+    type: "llm"
+    prompt: "Classify the following customer inquiry into one of: billing, technical, general, complaint"
+
+  - name: "response_generator"
+    description: "Generate appropriate response based on classified intent"
+    type: "llm"
+    prompt: "Generate a helpful, professional response for this {intent} inquiry"
+
+  - name: "escalation_checker"
+    description: "Determine if the issue needs human escalation"
+    type: "function"
+    function: "check_escalation_criteria"
+
+  - name: "context_manager"
+    description: "Maintain conversation context across multiple turns"
+    type: "memory"
+    config:
+      max_history: 10
+      summary_threshold: 5
+
+  - name: "quality_checker"
+    description: "Verify response quality before sending to customer"
+    type: "llm"
+    prompt: "Rate this response for: accuracy (1-5), helpfulness (1-5), professionalism (1-5)"
+
+edges:
+  - from: "intent_classifier"
+    to: "response_generator"
+  - from: "response_generator"
+    to: "escalation_checker"
+  - from: "escalation_checker"
+    to: "context_manager"
+    condition: "not escalated"
+  - from: "escalation_checker"
+    to: "human_handoff"
+    condition: "escalated"
+  - from: "context_manager"
+    to: "quality_checker"
+
+state:
+  schema:
+    fields:
+      - name: conversation_history
+        type: list
+        description: List of previous messages in the conversation
+      - name: customer_id
+        type: string
+        description: Unique customer identifier
+      - name: intent
+        type: string
+        description: Classified intent of the current inquiry
+      - name: escalation_count
+        type: integer
+        description: Number of times this customer has been escalated
+      - name: satisfaction_score
+        type: float
+        description: Customer satisfaction score from previous interactions
+
+metadata:
+  version: "1.0"
+  author: "support-team"
+  tags: ["customer-support", "langgraph", "multi-turn"]

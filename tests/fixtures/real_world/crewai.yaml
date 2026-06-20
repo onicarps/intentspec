@@ -1,0 +1,52 @@
+# CrewAI Multi-Agent Setup
+# Source: https://github.com/crewAIInc/crewAI-examples (typical pattern)
+
+agents:
+  - role: "Senior Researcher"
+    backstory: "An expert researcher with 10 years of experience in data analysis and market research. Known for thorough, well-sourced reports."
+    goal: "Conduct comprehensive research on the assigned topic and produce a detailed report"
+    allow_delegation: true
+    tools:
+      - "web_search"
+      - "file_reader"
+      - "summarizer"
+
+  - role: "Content Writer"
+    backstory: "A skilled technical writer who transforms research findings into clear, engaging content."
+    goal: "Transform research findings into well-structured, readable content"
+    allow_delegation: false
+    tools:
+      - "markdown_editor"
+      - "grammar_checker"
+
+  - role: "Quality Reviewer"
+    backstory: "A meticulous editor who ensures all content meets quality standards and factual accuracy."
+    goal: "Review all content for accuracy, completeness, and quality before publication"
+    allow_delegation: false
+    tools:
+      - "fact_checker"
+      - "plagiarism_detector"
+
+tasks:
+  - description: "Research the assigned topic thoroughly"
+    goal: "Produce a comprehensive research report with citations"
+  - description: "Write content based on research findings"
+    goal: "Create engaging, accurate content from research"
+  - description: "Review and quality-check all content"
+    goal: "Ensure all content meets quality standards"
+
+tools:
+  - name: "web_search"
+    description: "Search the web for information"
+  - name: "file_reader"
+    description: "Read and analyze files"
+  - name: "summarizer"
+    description: "Summarize long documents"
+  - name: "markdown_editor"
+    description: "Edit and format markdown content"
+  - name: "grammar_checker"
+    description: "Check grammar and style"
+  - name: "fact_checker"
+    description: "Verify factual claims"
+  - name: "plagiarism_detector"
+    description: "Check for plagiarism"
