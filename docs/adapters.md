@@ -9,7 +9,10 @@ IntentSpec can import agent specs from multiple formats. Each adapter extracts s
 | AGENTS.md | `init --from AGENTS.md <path>` | ✅ |
 | SKILL.md | `init --from SKILL.md <path>` | ✅ |
 | agentskills | `init --from agentskills <dir>` | ✅ |
-| CrewAI | `init --from crewai.yaml <path>` | ✅ (filename-based) |
+| CrewAI | `init --from crewai.yaml <path>` | ✅ (filename) |
+| LangGraph | `init --from langgraph.yaml <path>` | ✅ (filename) |
+| AutoGen | `init --from autogen-config.yaml <path>` | ✅ (filename) |
+| OpenAI Agents | `init --from openai-agents.yaml <path>` | ✅ (filename) |
 | Templates | `init --template <name>` | N/A |
 
 ## AGENTS.md
@@ -134,3 +137,39 @@ intentspec init --from AGENTS.md ./AGENTS.md --use-llm
 ```
 
 LLM extraction is opt-in and cached. Requires `OPENROUTER_API_KEY` environment variable.
+
+## LangGraph
+
+Parses LangGraph state graph configs. Extracts:
+- Node descriptions → goals
+- State schema fields → constraints
+- Edges → boundaries
+- Graph metadata → agent name
+
+```bash
+intentspec init --from langgraph.yaml ./langgraph.yaml
+```
+
+## AutoGen
+
+Parses AutoGen agent configs. Extracts:
+- Agent descriptions → goals
+- System messages → constraints
+- Agent tools → tools.allowed
+- Human input mode → boundaries
+
+```bash
+intentspec init --from autogen-config.yaml ./autogen.yaml
+```
+
+## OpenAI Agents SDK
+
+Parses OpenAI Agents SDK configs. Extracts:
+- Agent instructions → goals
+- Guardrails → constraints and non-negotiables
+- Agent tools → tools.allowed
+- Handoffs → boundaries
+
+```bash
+intentspec init --from openai-agents.yaml ./openai-agents.yaml
+```
