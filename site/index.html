@@ -315,6 +315,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-it-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Does
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -326,10 +337,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#supported-input-formats" class="md-nav__link">
+  <a href="#input-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Input Formats
+        Input Formats
       
     </span>
   </a>
@@ -341,6 +352,17 @@
     <span class="md-ellipsis">
       
         License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Links
       
     </span>
   </a>
@@ -555,6 +577,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-it-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What It Does
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -566,10 +599,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#supported-input-formats" class="md-nav__link">
+  <a href="#input-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Input Formats
+        Input Formats
       
     </span>
   </a>
@@ -581,6 +614,17 @@
     <span class="md-ellipsis">
       
         License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Links
       
     </span>
   </a>
@@ -614,52 +658,92 @@
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>intentspec
 intentspec<span class="w"> </span>init<span class="w"> </span>--quickstart
 intentspec<span class="w"> </span>validate
+intentspec<span class="w"> </span>score
+intentspec<span class="w"> </span>ci
 </code></pre></div>
+<h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Document</strong> — Define agent intent in a structured <code>intent.yaml</code></li>
+<li><strong>Convert</strong> — Import existing AGENTS.md / SKILL.md / CrewAI specs</li>
+<li><strong>Validate</strong> — Schema + semantic checks catch misconfigurations</li>
+<li><strong>Score</strong> — Intent Debt Score (0-100) measures spec quality</li>
+<li><strong>Coverage</strong> — Compare intent against actual source text</li>
+<li><strong>Enforce</strong> — CI/CD integration fails builds when intent is broken</li>
+<li><strong>Audit</strong> — Generate compliance reports for SOC 2 / EU AI Act</li>
+</ol>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Validate</strong> — Schema + semantic validation of intent.yaml</li>
-<li><strong>Score</strong> — Intent Debt Score (IDS 0-100) with 7 weighted components</li>
-<li><strong>Coverage</strong> — Structural coverage analysis (tools, goals, constraints, non-negotiables)</li>
-<li><strong>Diff</strong> — Git-integrated intent change tracking</li>
-<li><strong>Lint</strong> — Quality checks for agent specs</li>
-<li><strong>CI</strong> — Unified CI/CD hook with exit codes</li>
-<li><strong>Audit Report</strong> — SOC 2 / EU AI Act compliance documents</li>
-<li><strong>Convert</strong> — Import from AGENTS.md, SKILL.md, agentskills, CrewAI</li>
-<li><strong>Templates</strong> — 5 built-in agent templates</li>
-</ul>
-<h2 id="supported-input-formats">Supported Input Formats<a class="headerlink" href="#supported-input-formats" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Format</th>
+<th>Feature</th>
 <th>Command</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>AGENTS.md</td>
-<td><code>intentspec init --from AGENTS.md &lt;path&gt;</code></td>
+<td>Validate</td>
+<td><code>validate</code></td>
+<td>Schema + semantic validation</td>
 </tr>
 <tr>
-<td>SKILL.md</td>
-<td><code>intentspec init --from SKILL.md &lt;path&gt;</code></td>
+<td>Score</td>
+<td><code>score</code></td>
+<td>Intent Debt Score (IDS 0-100)</td>
 </tr>
 <tr>
-<td>agentskills</td>
-<td><code>intentspec init --from agentskills &lt;path&gt;</code></td>
+<td>Coverage</td>
+<td><code>coverage</code></td>
+<td>Structural coverage analysis</td>
 </tr>
 <tr>
-<td>CrewAI</td>
-<td><code>intentspec init --from crewai.yaml &lt;path&gt;</code></td>
+<td>Diff</td>
+<td><code>diff</code></td>
+<td>Git-integrated change tracking</td>
+</tr>
+<tr>
+<td>Lint</td>
+<td><code>lint</code></td>
+<td>Quality checks</td>
+</tr>
+<tr>
+<td>CI</td>
+<td><code>ci</code></td>
+<td>Unified CI/CD hook</td>
+</tr>
+<tr>
+<td>Audit</td>
+<td><code>audit-report</code></td>
+<td>Compliance report generation</td>
+</tr>
+<tr>
+<td>Convert</td>
+<td><code>init --from</code></td>
+<td>Import from 4 source formats</td>
 </tr>
 <tr>
 <td>Templates</td>
-<td><code>intentspec init --template &lt;name&gt;</code></td>
+<td><code>init --template</code></td>
+<td>5 built-in agent templates</td>
 </tr>
 </tbody>
 </table>
+<h2 id="input-formats">Input Formats<a class="headerlink" href="#input-formats" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>AGENTS.md</strong> — Markdown with agent specification</li>
+<li><strong>SKILL.md</strong> — Markdown with YAML frontmatter</li>
+<li><strong>agentskills</strong> — Directory with SKILL.md + Resources/Scripts/References</li>
+<li><strong>CrewAI</strong> — <code>crewai.yaml</code> config file</li>
+<li><strong>Templates</strong> — Built-in templates for common agent types</li>
+</ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>MIT</p>
+<h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>GitHub:</strong> https://github.com/onicarps/intentspec</li>
+<li><strong>Issues:</strong> https://github.com/onicarps/intentspec/issues</li>
+<li><strong>Linear:</strong> IntentSpec project (ONI team) — issues ONI-156 to ONI-165</li>
+</ul>
 
 
 

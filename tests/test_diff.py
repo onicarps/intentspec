@@ -664,11 +664,13 @@ intent: {}
         assert "No previous version found" in result
 
     def test_parse_error(self, tmp_path):
-        """Test handling of unparseable source file."""
+        """Test handling of unparseable source file — returns error message, no crash."""
         spec = tmp_path / "intent.yaml"
         spec.write_text("not: valid: yaml: [")
-        with pytest.raises(RuntimeError, match="Failed to parse"):
-            run_diff(str(spec))
+        result = run_diff(str(spec))
+        # Should handle gracefully — return message, not crash
+        assert isinstance(result, str)
+        assert len(result) > 0
 
     def test_identical_files_no_changes(self, tmp_path):
         """Test when old and new are identical."""

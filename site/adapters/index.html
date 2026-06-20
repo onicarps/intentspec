@@ -466,6 +466,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#supported-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Formats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agentsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTS.md
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skillmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SKILL.md
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agentskills" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        agentskills
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#crewai" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -499,16 +543,27 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#agentsmd" class="md-nav__link">
+  <a href="#templates" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AGENTS.md
+        Templates
       
     </span>
   </a>
@@ -516,10 +571,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#skillmd" class="md-nav__link">
+  <a href="#interactive-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SKILL.md
+        Interactive Review
       
     </span>
   </a>
@@ -527,10 +582,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agentskills" class="md-nav__link">
+  <a href="#llm-augmentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        agentskills
+        LLM Augmentation
       
     </span>
   </a>
@@ -572,41 +627,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#crewai" class="md-nav__link">
+  <a href="#supported-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CrewAI
+        Supported Formats
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="CrewAI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mapping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mapping
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-crewaiyaml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example crewai.yaml
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -643,6 +670,89 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#crewai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CrewAI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CrewAI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-crewaiyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example crewai.yaml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Templates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interactive-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-augmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Augmentation
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -664,11 +774,62 @@
 
 
 <h1 id="adapters">Adapters<a class="headerlink" href="#adapters" title="Permanent link">&para;</a></h1>
-<p>IntentSpec can import agent specs from multiple formats.</p>
-<h2 id="crewai">CrewAI<a class="headerlink" href="#crewai" title="Permanent link">&para;</a></h2>
-<p>Parse a CrewAI <code>crewai.yaml</code> config into intent.yaml:</p>
-<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>crewai.yaml<span class="w"> </span>./crewai.yaml
+<p>IntentSpec can import agent specs from multiple formats. Each adapter extracts structured intent from the source format and produces a valid <code>intent.yaml</code>.</p>
+<h2 id="supported-formats">Supported Formats<a class="headerlink" href="#supported-formats" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Command</th>
+<th>Auto-detect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AGENTS.md</td>
+<td><code>init --from AGENTS.md &lt;path&gt;</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SKILL.md</td>
+<td><code>init --from SKILL.md &lt;path&gt;</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>agentskills</td>
+<td><code>init --from agentskills &lt;dir&gt;</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>CrewAI</td>
+<td><code>init --from crewai.yaml &lt;path&gt;</code></td>
+<td>✅ (filename-based)</td>
+</tr>
+<tr>
+<td>Templates</td>
+<td><code>init --template &lt;name&gt;</code></td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<h2 id="agentsmd">AGENTS.md<a class="headerlink" href="#agentsmd" title="Permanent link">&para;</a></h2>
+<p>Parses Markdown files with agent specifications. Extracts:
+- Agent name and description from headings and body text
+- Goals from "Goals", "Purpose", or "Responsibilities" sections
+- Constraints from "Constraints", "Rules", or "Guidelines" sections
+- Tools from "Tools" or "Capabilities" sections</p>
+<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>AGENTS.md<span class="w"> </span>./AGENTS.md
 </code></pre></div>
+<h2 id="skillmd">SKILL.md<a class="headerlink" href="#skillmd" title="Permanent link">&para;</a></h2>
+<p>Parses Markdown files with YAML frontmatter (YAML between <code>---</code> delimiters at the top). The frontmatter must contain a <code>name</code> key for auto-detection.</p>
+<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>SKILL.md<span class="w"> </span>./my-skill/SKILL.md
+</code></pre></div>
+<h2 id="agentskills">agentskills<a class="headerlink" href="#agentskills" title="Permanent link">&para;</a></h2>
+<p>Parses a directory containing <code>SKILL.md</code> plus optional <code>Resources/</code>, <code>Scripts/</code>, and <code>References/</code> subdirectories.</p>
+<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>agentskills<span class="w"> </span>./my-skill-directory/
+</code></pre></div>
+<h2 id="crewai">CrewAI<a class="headerlink" href="#crewai" title="Permanent link">&para;</a></h2>
+<p>Parses <code>crewai.yaml</code> or <code>crewai.yml</code> config files. Auto-detected by filename.</p>
 <h3 id="mapping">Mapping<a class="headerlink" href="#mapping" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -702,6 +863,10 @@
 <td><code>tasks[].description</code></td>
 <td><code>intent.goals[].description</code> (fallback)</td>
 </tr>
+<tr>
+<td><code>tools[].name</code></td>
+<td><code>tools.allowed</code></td>
+</tr>
 </tbody>
 </table>
 <h3 id="example-crewaiyaml">Example crewai.yaml<a class="headerlink" href="#example-crewaiyaml" title="Permanent link">&para;</a></h3>
@@ -717,18 +882,78 @@
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Research</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">topic&quot;</span>
 <span class="w">    </span><span class="nt">goal</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Find</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">synthesize</span><span class="nv"> </span><span class="s">relevant</span><span class="nv"> </span><span class="s">information&quot;</span>
 </code></pre></div>
-<h2 id="agentsmd">AGENTS.md<a class="headerlink" href="#agentsmd" title="Permanent link">&para;</a></h2>
-<p>Parse an AGENTS.md file (Markdown with agent specification):</p>
+<h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Auto-detect from filename</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>crewai.yaml<span class="w"> </span>./crewai.yaml
+
+<span class="c1"># Force format</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>crewai<span class="w"> </span>./my-config.yml<span class="w"> </span>--name<span class="w"> </span>my-agent
+</code></pre></div>
+<h2 id="templates">Templates<a class="headerlink" href="#templates" title="Permanent link">&para;</a></h2>
+<p>Built-in templates for common agent types:</p>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>coding-agent</code></td>
+<td>coding</td>
+<td>Code review and development</td>
+</tr>
+<tr>
+<td><code>research-agent</code></td>
+<td>research</td>
+<td>Information gathering and analysis</td>
+</tr>
+<tr>
+<td><code>service-agent</code></td>
+<td>service</td>
+<td>User-facing service delivery</td>
+</tr>
+<tr>
+<td><code>data-pipeline</code></td>
+<td>data</td>
+<td>ETL and data quality</td>
+</tr>
+<tr>
+<td><code>multi-agent-coordinator</code></td>
+<td>coordinator</td>
+<td>Multi-agent orchestration</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1"># List available templates</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>list
+
+<span class="c1"># Use a template</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>coding-agent<span class="w"> </span>--name<span class="w"> </span>my-reviewer
+</code></pre></div>
+<h2 id="interactive-review">Interactive Review<a class="headerlink" href="#interactive-review" title="Permanent link">&para;</a></h2>
+<p>After conversion, IntentSpec runs an interactive review flow where you can:
+- <strong>Keep</strong> (k) — Accept the extracted value as-is
+- <strong>Edit</strong> (e) — Provide a new value
+- <strong>Drop</strong> (d) — Remove the field
+- <strong>Finish</strong> (f) — Accept all remaining fields and exit</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>AGENTS.md<span class="w"> </span>./AGENTS.md
+<span class="c1">#   Agent name [extracted-name]:</span>
+<span class="c1">#   Agent description: An agent that...</span>
+<span class="c1">#     Current: An agent that reviews code</span>
+<span class="c1">#     Action [k/e/f]: e</span>
+<span class="c1">#     New Agent description: A code review agent</span>
 </code></pre></div>
-<h2 id="skillmd">SKILL.md<a class="headerlink" href="#skillmd" title="Permanent link">&para;</a></h2>
-<p>Parse a SKILL.md file (YAML frontmatter + Markdown body):</p>
-<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>SKILL.md<span class="w"> </span>./SKILL.md
+<p>Skip interactive mode with <code>--yes</code> or <code>--no-interactive</code>:</p>
+<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>AGENTS.md<span class="w"> </span>./AGENTS.md<span class="w"> </span>--yes
 </code></pre></div>
-<h2 id="agentskills">agentskills<a class="headerlink" href="#agentskills" title="Permanent link">&para;</a></h2>
-<p>Parse an agentskills directory (SKILL.md + Resources/Scripts/References):</p>
-<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>agentskills<span class="w"> </span>./my-skill/
+<h2 id="llm-augmentation">LLM Augmentation<a class="headerlink" href="#llm-augmentation" title="Permanent link">&para;</a></h2>
+<p>Optionally augment rule-based extraction with an LLM for better accuracy:</p>
+<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>AGENTS.md<span class="w"> </span>./AGENTS.md<span class="w"> </span>--use-llm
 </code></pre></div>
+<p>LLM extraction is opt-in and cached. Requires <code>OPENROUTER_API_KEY</code> environment variable.</p>
 
 
 

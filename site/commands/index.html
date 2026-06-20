@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#commands" class="md-skip">
+        <a href="#commands-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -360,6 +360,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#validate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -378,6 +389,56 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="init">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-existing-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Existing Spec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interactive-wizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Wizard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -590,6 +651,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#validate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -608,6 +680,56 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="init">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#from-existing-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Existing Spec
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        From Template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interactive-wizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interactive Wizard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -697,101 +819,323 @@
   
 
 
-<h1 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h1>
+<h1 id="commands-reference">Commands Reference<a class="headerlink" href="#commands-reference" title="Permanent link">&para;</a></h1>
+<p>Full reference for all IntentSpec CLI commands.</p>
+<h2 id="global-options">Global Options<a class="headerlink" href="#global-options" title="Permanent link">&para;</a></h2>
+<p>All commands support <code>--format text|json|yaml</code> (default: text).</p>
 <h2 id="validate">validate<a class="headerlink" href="#validate" title="Permanent link">&para;</a></h2>
-<p>Validate intent.yaml against schema and semantic rules.</p>
+<p>Validate intent.yaml against JSON Schema v1 and semantic rules.</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>validate<span class="w"> </span><span class="o">[</span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--strict<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </code></pre></div>
+<p><strong>Arguments:</strong>
+- <code>PATH</code> — File or directory to validate (default: current directory)</p>
+<p><strong>Options:</strong>
+- <code>--strict</code> — Treat semantic warnings as errors (exit code 2)
+- <code>--format</code> — Output format: text (default), json, yaml</p>
 <p><strong>Exit codes:</strong>
-- <code>0</code> — Valid
-- <code>1</code> — Schema validation error
-- <code>2</code> — Semantic warning (use <code>--strict</code> to fail on warnings)</p>
+| Code | Meaning |
+|------|---------|
+| 0 | All files valid |
+| 1 | Schema validation error |
+| 2 | Semantic warning (only with <code>--strict</code>) |</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1"># Validate current directory</span>
+intentspec<span class="w"> </span>validate
+
+<span class="c1"># Validate a specific file</span>
+intentspec<span class="w"> </span>validate<span class="w"> </span>path/to/intent.yaml
+
+<span class="c1"># Strict mode — fail on warnings too</span>
+intentspec<span class="w"> </span>validate<span class="w"> </span>--strict
+
+<span class="c1"># Machine-readable output</span>
+intentspec<span class="w"> </span>validate<span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div></p>
+<hr />
 <h2 id="init">init<a class="headerlink" href="#init" title="Permanent link">&para;</a></h2>
 <p>Initialize intent.yaml from an existing spec, template, or interactive wizard.</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># From existing spec</span>
-intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>AGENTS.md<span class="w"> </span>&lt;path&gt;
-intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>SKILL.md<span class="w"> </span>&lt;path&gt;
-intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>agentskills<span class="w"> </span>&lt;path&gt;
-intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>crewai.yaml<span class="w"> </span>&lt;path&gt;
-
-<span class="c1"># From template</span>
-intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>coding-agent
-intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>data-pipeline<span class="w"> </span>--name<span class="w"> </span>my-pipeline
+<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span><span class="o">[</span>SOURCE<span class="o">]</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</code></pre></div>
+<h3 id="from-existing-spec">From Existing Spec<a class="headerlink" href="#from-existing-spec" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Auto-detect format from file content</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>AGENTS.md<span class="w"> </span>./AGENTS.md
+intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>SKILL.md<span class="w"> </span>./my-skill/SKILL.md
+intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>agentskills<span class="w"> </span>./my-skill-directory/
+intentspec<span class="w"> </span>init<span class="w"> </span>--from<span class="w"> </span>crewai<span class="w"> </span>./crewai.yaml
+</code></pre></div>
+<h3 id="from-template">From Template<a class="headerlink" href="#from-template" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># List available templates</span>
 intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>list
 
-<span class="c1"># Interactive wizard</span>
-intentspec<span class="w"> </span>init<span class="w"> </span>--quickstart
+<span class="c1"># Use a template (prompts for agent name)</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>coding-agent
+
+<span class="c1"># Use a template with explicit name (non-interactive)</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>data-pipeline<span class="w"> </span>--name<span class="w"> </span>my-etl<span class="w"> </span>--output<span class="w"> </span>intent.yaml
+
+<span class="c1"># Community templates (placeholder)</span>
+intentspec<span class="w"> </span>init<span class="w"> </span>--template<span class="w"> </span>https://example.com/template.yaml
 </code></pre></div>
+<h3 id="interactive-wizard">Interactive Wizard<a class="headerlink" href="#interactive-wizard" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>init<span class="w"> </span>--quickstart
+</code></pre></div>
+<p>The wizard prompts for:
+1. Agent name (kebab-case)
+2. Agent description (one sentence)
+3. Agent type (coding/research/service/data/coordinator/custom)
+4. Non-negotiables (comma-separated, or skip)
+5. Tools (comma-separated, or skip)</p>
+<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--from FORMAT</code></td>
+<td>Force input format: agents_md, skill_md, agentskills, crewai</td>
+</tr>
+<tr>
+<td><code>--template NAME</code></td>
+<td>Use built-in template, or <code>list</code> to see available</td>
+</tr>
+<tr>
+<td><code>--quickstart</code></td>
+<td>Run interactive wizard</td>
+</tr>
+<tr>
+<td><code>--use-llm</code></td>
+<td>Augment with LLM extraction (opt-in, cached)</td>
+</tr>
+<tr>
+<td><code>-o, --output PATH</code></td>
+<td>Output path (default: intent.yaml, <code>-</code> for stdout)</td>
+</tr>
+<tr>
+<td><code>--name NAME</code></td>
+<td>Override agent name (skips prompt, non-interactive)</td>
+</tr>
+<tr>
+<td><code>--interactive/--no-interactive</code></td>
+<td>Control interactive review (default: on for TTY)</td>
+</tr>
+<tr>
+<td><code>-y, --yes</code></td>
+<td>Skip interactive review</td>
+</tr>
+<tr>
+<td><code>--format FORMAT</code></td>
+<td>Output format: text (default), json, yaml</td>
+</tr>
+<tr>
+<td><code>--strict</code></td>
+<td>Refuse to write if validation fails</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td>Overwrite existing output file</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="score">score<a class="headerlink" href="#score" title="Permanent link">&para;</a></h2>
 <p>Calculate Intent Debt Score (IDS 0-100).</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>score<span class="w"> </span><span class="o">[</span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--by-agent<span class="o">]</span><span class="w"> </span><span class="o">[</span>--weights<span class="w"> </span>JSON<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </code></pre></div>
-<p>The IDS is calculated from 7 weighted components:</p>
+<p>The IDS measures how complete and consistent an agent's intent specification is. Higher is better.</p>
+<p><strong>IDS Formula:</strong>
+<div class="highlight"><pre><span></span><code>IDS = 100 - (
+  tool_coverage    × 0.25 +
+  goal_coverage    × 0.15 +
+  constraint_cov   × 0.10 +
+  non_negot_cov    × 0.15 +
+  freshness        × 0.10 +
+  completeness     × 0.15 +
+  consistency      × 0.10
+)
+</code></pre></div></p>
+<p><strong>Components:</strong></p>
 <table>
 <thead>
 <tr>
 <th>Component</th>
 <th>Weight</th>
+<th>Measures</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Tool coverage</td>
 <td>25%</td>
+<td>Are all mentioned tools declared in intent?</td>
 </tr>
 <tr>
 <td>Goal coverage</td>
 <td>15%</td>
+<td>Are source goals reflected in intent?</td>
 </tr>
 <tr>
 <td>Constraint coverage</td>
 <td>10%</td>
+<td>Ratio of enforceable constraints</td>
 </tr>
 <tr>
 <td>Non-negotiable coverage</td>
 <td>15%</td>
+<td>Ratio of hard non-negotiables</td>
 </tr>
 <tr>
 <td>Freshness</td>
 <td>10%</td>
+<td>How recently was the spec updated?</td>
 </tr>
 <tr>
 <td>Completeness</td>
 <td>15%</td>
+<td>8 fields: desc, goals, constraints, non-negotiables, tools_allowed, boundaries, escalation, failure_modes</td>
 </tr>
 <tr>
 <td>Consistency</td>
 <td>10%</td>
+<td>No tool in both allowed and denied lists</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Options:</strong>
+- <code>--by-agent</code> — Show per-agent breakdown (for multi-agent specs)
+- <code>--weights JSON</code> — Custom weights as JSON, e.g. <code>'{"tool_coverage":0.3}'</code>
+- <code>--format</code> — Output format: text (default), json, yaml</p>
+<hr />
 <h2 id="coverage">coverage<a class="headerlink" href="#coverage" title="Permanent link">&para;</a></h2>
-<p>Show intent coverage percentage.</p>
+<p>Show intent coverage percentage against source text.</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>coverage<span class="w"> </span><span class="o">[</span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </code></pre></div>
+<p>Compares the intent.yaml against the original source text (AGENTS.md, SKILL.md, etc.) to determine what percentage of mentioned tools, goals, and constraints are captured in the formal intent spec.</p>
+<p><strong>Output includes:</strong>
+- Overall coverage percentage
+- Tool coverage (mentioned vs declared)
+- Goal coverage (mentioned vs declared)
+- Constraint coverage
+- Non-negotiable coverage
+- Missing tools list
+- Missing goals list</p>
+<hr />
 <h2 id="diff">diff<a class="headerlink" href="#diff" title="Permanent link">&para;</a></h2>
-<p>Show intent changes between commits.</p>
+<p>Show intent changes between commits or against a source commit.</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>diff<span class="w"> </span><span class="o">[</span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--semantic<span class="o">]</span><span class="w"> </span><span class="o">[</span>--source-commit<span class="w"> </span>HASH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </code></pre></div>
+<p><strong>Options:</strong>
+- <code>--semantic</code> — Show intent-level changes (goals added/removed, tools changed) rather than raw text diff
+- <code>--source-commit HASH</code> — Compare current state against a specific commit
+- <code>--cache</code> — Use cached diff if git is unavailable
+- <code>--format</code> — Output format: text (default), json, yaml</p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1"># Show changes since last commit</span>
+intentspec<span class="w"> </span>diff<span class="w"> </span>intent.yaml
+
+<span class="c1"># Semantic diff — what changed in intent</span>
+intentspec<span class="w"> </span>diff<span class="w"> </span>--semantic
+
+<span class="c1"># Compare against a specific commit</span>
+intentspec<span class="w"> </span>diff<span class="w"> </span>--source-commit<span class="w"> </span>abc1234
+
+<span class="c1"># Machine-readable</span>
+intentspec<span class="w"> </span>diff<span class="w"> </span>--semantic<span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div></p>
+<hr />
 <h2 id="lint">lint<a class="headerlink" href="#lint" title="Permanent link">&para;</a></h2>
-<p>Quality checks for intent specs.</p>
+<p>Quality checks for intent specs. Not a full linting engine — focuses on common mistakes.</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>lint<span class="w"> </span><span class="o">[</span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </code></pre></div>
-<p>Checks: goal description length, constraint enforceability, tool rationale, non-negotiable severity, duplicate tools, agent description.</p>
+<p><strong>Checks performed:</strong>
+| Check | Description |
+|-------|-------------|
+| Goal description length | Goals should be &gt; 10 characters |
+| Constraint enforceable | Constraints should have enforceable: true/false |
+| Tool rationale | Tools should have a rationale explaining why |
+| Non-negotiable severity | Non-negotiables should have severity: hard/soft |
+| Duplicate tool names | No tool should appear twice in allowed or denied |
+| Agent description | Agent description should be &gt; 10 characters |</p>
+<p><strong>Exit codes:</strong>
+| Code | Meaning |
+|------|---------|
+| 0 | No issues found |
+| 1 | Lint errors found |
+| 2 | Warnings found |</p>
+<hr />
 <h2 id="ci">ci<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h2>
 <p>CI/CD hook — runs validate + lint + score + coverage in one pass.</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>ci<span class="w"> </span><span class="o">[</span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--min-coverage<span class="w"> </span>N<span class="o">]</span><span class="w"> </span><span class="o">[</span>--strict<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </code></pre></div>
+<p>Designed for CI/CD pipelines. Returns a single exit code representing the worst result from all checks.</p>
 <p><strong>Exit codes:</strong>
-- <code>0</code> — All checks pass
-- <code>1</code> — Validation error
-- <code>2</code> — Warning (stale/sparse)
-- <code>3</code> — Below threshold or missing spec</p>
+| Code | Meaning |
+|------|---------|
+| 0 | All checks pass |
+| 1 | Validation error (schema/semantic/lint error) |
+| 2 | Warning (stale, sparse) |
+| 3 | Below threshold or missing spec |</p>
+<p><strong>Options:</strong>
+- <code>--min-coverage N</code> — Minimum coverage threshold (0-100). Exit 3 if below.
+- <code>--strict</code> — Treat warnings as errors (promotes exit 2 to exit 1)
+- <code>--format</code> — Output format: text (default), json, yaml</p>
+<p><strong>CI Configuration:</strong></p>
+<p>Create <code>.intentspec.yaml</code> in your repo root:
+<div class="highlight"><pre><span></span><code><span class="nt">min_coverage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="nt">strict</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">json</span>
+</code></pre></div></p>
+<p>Config precedence: CLI flags &gt; env vars &gt; .intentspec.yaml &gt; defaults</p>
+<p><strong>GitHub Actions:</strong>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">onicarps/intentspec-action@v1</span>
+<span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">min-coverage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">strict</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div></p>
+<p><strong>GitLab CI:</strong>
+<div class="highlight"><pre><span></span><code><span class="nt">intentspec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">script</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install intentspec</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">intentspec ci --min-coverage 80 --strict</span>
+</code></pre></div></p>
+<hr />
 <h2 id="audit-report">audit-report<a class="headerlink" href="#audit-report" title="Permanent link">&para;</a></h2>
-<p>Generate a compliance audit report.</p>
+<p>Generate a compliance audit report for regulatory frameworks.</p>
 <div class="highlight"><pre><span></span><code>intentspec<span class="w"> </span>audit-report<span class="w"> </span><span class="o">[</span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span>text<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </code></pre></div>
-<p>Produces a SOC 2 / EU AI Act compliance document with agent inventory, full spec dump, IDS score, and SHA-256 hash.</p>
+<p>Produces a comprehensive compliance document including:
+- Agent inventory table (name, type, description, version)
+- Full intent specification dump
+- IDS score with component breakdown
+- Version history placeholder
+- SOC 2 / EU AI Act preamble
+- Generation timestamp and SHA-256 hash of source file</p>
+<p><strong>Options:</strong>
+- <code>--format</code> — Output format: text (markdown, default), json, yaml</p>
+<p><strong>Example output (text):</strong>
+<div class="highlight"><pre><span></span><code># IntentSpec Compliance Report
+
+This report documents the declared intent of an AI agent to support
+compliance evidence under frameworks such as SOC 2...
+
+## Agent Inventory
+| Name | Type | Description | Version |
+| code-reviewer | coding | Reviews PRs for quality | 1.0 |
+
+## Intent Specification
+### Goals
+- [high] Identify bugs, security vulnerabilities
+
+## Intent Debt Score
+IDS: ~96 / 100 (estimate)
+
+---
+Generated: 2026-06-20T08:00:00+00:00
+SHA-256: a1b2c3d4...
+</code></pre></div></p>
 
 
 
