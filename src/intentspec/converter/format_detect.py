@@ -53,6 +53,10 @@ def detect_format(path: Path | str) -> str:
     if p.is_file() and p.stem.lower() == "autogen-config" and p.suffix.lower() in (".yaml", ".yml"):
         return "autogen"
 
+    # OpenAI Agents: file named openai-agents.yaml or openai-agents.yml
+    if p.is_file() and p.stem.lower() == "openai-agents" and p.suffix.lower() in (".yaml", ".yml"):
+        return "openai_agents"
+
     if p.is_dir():
         skill = p / "SKILL.md"
         if skill.is_file() and any((p / sub).is_dir() for sub in _AGENTSKILLS_SUBDIRS):

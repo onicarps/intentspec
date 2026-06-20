@@ -1,0 +1,119 @@
+# Complex OpenAI Agents config — 4+ agents with tools, handoffs, nested guardrails
+workflow:
+  name: "DevOps Orchestrator"
+  description: "Multi-agent DevOps pipeline with monitoring, deployment, and incident response"
+
+agents:
+  - name: "Monitor Agent"
+    instructions: |
+      You are a DevOps monitoring specialist. Continuously monitor system metrics,
+      logs, and alerts. When anomalies are detected, classify them by severity
+      and route to appropriate response agents.
+    guardrails:
+      input:
+        - "Reject requests to modify monitoring thresholds without authorization"
+        - "Reject non-monitoring related queries"
+      output:
+        - "All alerts must include severity classification"
+        - "Do not suppress critical alerts"
+    tools:
+      - name: "prometheus_api"
+        category: "monitoring"
+      - name: "grafana_dashboard"
+        category: "monitoring"
+      - name: "pagerduty_api"
+        category: "alerting"
+    handoffs:
+      - to: "Deploy Agent"
+        condition: "deployment-related anomaly detected"
+      - to: "Incident Responder"
+        condition: "critical severity alert"
+
+  - name: "Deploy Agent"
+    instructions: |
+      You are a deployment automation specialist. Manage CI/CD pipelines, execute
+      deployments, and handle rollbacks. Always verify deployment health before
+      marking as complete.
+    guardrails:
+      input:
+        - "Reject deployment requests without passing staging tests"
+        - "Reject requests to deploy to production without approval"
+      output:
+        - "All deployments must include rollback plan"
+        - "Do not skip health checks after deployment"
+    tools:
+      - name: "kubernetes_api"
+        category: "deployment"
+      - name: "helm_cli"
+        category: "deployment"
+      - name: "docker_api"
+        category: "deployment"
+      - name: "git_api"
+        category: "version_control"
+    handoffs:
+      - to: "Monitor Agent"
+        condition: "deployment completed, needs post-deploy monitoring"
+
+  - name: "Incident Responder"
+    instructions: |
+      You are an incident response coordinator. When a production incident is
+      detected, assess severity, assemble the response team, coordinate
+      remediation efforts, and run post-incident reviews.
+    guardrails:
+      input:
+        - "Reject non-incident related requests during active incident"
+      output:
+        - "All incident reports must include timeline and root cause"
+        - "Do not close incidents without post-incident review"
+    tools:
+      - name: "pagerduty_api"
+        category: "alerting"
+      - name: "slack_api"
+        category: "communication"
+      - name: "runbook_db"
+        category: "documentation"
+    handoffs:
+      - to: "Documentation Agent"
+        condition: "incident resolved, needs documentation update"
+
+  - name: "Documentation Agent"
+    instructions: |
+      You are a technical documentation specialist. After any infrastructure
+      change or incident resolution, update relevant documentation, runbooks,
+      and architecture diagrams.
+    guardrails:
+      input:
+        - "Reject documentation changes without corresponding system change"
+      output:
+        - "All documentation must be version-controlled"
+        - "Do not delete existing documentation without approval"
+    tools:
+      - name: "markdown_editor"
+        category: "documentation"
+      - name: "git_api"
+        category: "version_control"
+      - name: "confluence_api"
+        category: "documentation"
+    handoffs: []
+
+  - name: "Security Reviewer"
+    instructions: |
+      You are a security compliance reviewer. Review all infrastructure changes,
+      deployment configurations, and access controls for security vulnerabilities.
+    guardrails:
+      input:
+        - "Reject review requests without complete change documentation"
+        - "Reject requests to bypass security policies"
+      output:
+        - "All security findings must include severity and remediation steps"
+        - "Do not approve changes with critical vulnerabilities"
+    tools:
+      - name: "vulnerability_scanner"
+        category: "security"
+      - name: "iam_api"
+        category: "security"
+      - name: "compliance_db"
+        category: "security"
+    handoffs:
+      - to: "Deploy Agent"
+        condition: "security review passed, deployment approved"

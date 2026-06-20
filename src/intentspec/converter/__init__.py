@@ -8,6 +8,7 @@ from pathlib import Path
 from intentspec.adapters.autogen import parse_autogen
 from intentspec.adapters.crewai import parse_crewai
 from intentspec.adapters.langgraph import parse_langgraph
+from intentspec.adapters.openai_agents import parse_openai_agents
 from intentspec.converter.agents_md import parse_agents_md
 from intentspec.converter.agentskills import parse_agentskills
 from intentspec.converter.format_detect import detect_format
@@ -25,6 +26,7 @@ __all__ = [
     "parse_crewai",
     "parse_langgraph",
     "parse_autogen",
+    "parse_openai_agents",
     "ParseResult",
     "FieldSource",
     "ConverterError",
@@ -60,7 +62,7 @@ def parse(
         raise ConverterError(f"Source not found: {p}")
 
     fmt = format if format else detect_format(p)
-    if fmt not in {"agents_md", "skill_md", "agentskills", "crewai", "langgraph", "autogen"}:
+    if fmt not in {"agents_md", "skill_md", "agentskills", "crewai", "langgraph", "autogen", "openai_agents"}:
         raise ConverterError(f"Unknown format: {fmt}")
 
     if fmt == "agents_md":
@@ -73,6 +75,8 @@ def parse(
         result = parse_langgraph(p)
     elif fmt == "autogen":
         result = parse_autogen(p)
+    elif fmt == "openai_agents":
+        result = parse_openai_agents(p)
     else:  # agentskills
         result = parse_agentskills(p)
 

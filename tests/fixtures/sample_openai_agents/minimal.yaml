@@ -1,0 +1,4 @@
+# Minimal OpenAI Agents config — 1 agent, minimal config
+agents:
+  - name: "Simple Assistant"
+    instructions: "You are a helpful assistant that answers user questions."
