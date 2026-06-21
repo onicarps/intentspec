@@ -34,7 +34,7 @@ from intentspec.spec.validate import validate_file, validate_schema, validate_se
 
 
 @click.group()
-@click.version_option(version="0.1.0", prog_name="intentspec")
+@click.version_option(version="0.1.1", prog_name="intentspec")
 def main():
     """IntentSpec — Coverage and enforcement layer for AI agent infrastructure.
 
