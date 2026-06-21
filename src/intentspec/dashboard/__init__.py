@@ -18,7 +18,7 @@ from intentspec.health import run_health
 from intentspec.drift import run_drift
 
 
-# Chart.js bundled locally — minified v4.4.0
+# Chart.js — loaded from CDN (no local bundle to keep package small)
 _CHART_JS = "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
 
 

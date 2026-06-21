@@ -1,7 +1,7 @@
 """Intent Debt Score (IDS) calculation.
 
-IDS = 100 - weighted sum of coverage components.
-0 = fully documented, 100 = no documentation.
+IDS = 100 * weighted sum of coverage components.
+100 = fully documented, 0 = no documentation.
 """
 
 from __future__ import annotations

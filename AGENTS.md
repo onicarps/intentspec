@@ -25,7 +25,7 @@
 | Testing | pytest + pytest-cov | Industry standard, 90%+ target |
 | Packaging | setuptools (pyproject.toml) | Modern, PEP 621 compliant |
 | HTTP (converter LLM) | urllib.request | stdlib, no extra deps |
-| Dashboard (Phase 4) | FastAPI + Jinja2 + Chart.js | Lightweight, no React needed. Chart.js bundled locally. |
+| Dashboard (Phase 4) | FastAPI + Jinja2 + Chart.js | Lightweight, no React needed. Chart.js via CDN. |
 
 ---
 
