@@ -51,7 +51,7 @@ Validates against JSON Schema v1 plus semantic rules: goal description length, c
 
 ### 3. Score
 
-Intent Debt Score (0-100) measures spec quality across 7 weighted components:
+Intent Debt Score (0-100) measures spec quality across 7 weighted components. Despite the name, higher is better — think of it as "100 minus your intent debt":
 
 ```
 $ intentspec score intent.yaml
@@ -85,7 +85,40 @@ Single command runs validate + lint + score + coverage:
 intentspec ci --min-coverage 80 --strict
 ```
 
-Exit codes: 0 = pass, 1 = validation error, 2 = warning, 3 = below threshold.
+Exit codes:
+
+| Code | Meaning |
+|------|---------|
+| 0 | All checks pass |
+| 1 | Validation error (schema/semantic/lint) |
+| 2 | Warning (stale, sparse) |
+| 3 | Below threshold or missing spec |
+
+### 5. Lint Quality Checks
+
+Standalone quality checks for intent specs:
+
+```bash
+intentspec lint intent.yaml
+  3 issue(s) found:
+    ✗ [goal-description] (intent.goals[0].description): Goal description should be more than 10 characters
+    ✗ [tool-rationale] (intent.tools.allowed[0].rationale): Tool 'github' should have a rationale
+    ⚠ [goals-required] (intent.goals): At least one goal should be defined
+```
+
+Checks: goal description length, constraint enforceability, tool rationale, non-negotiable severity, duplicate tools, agent description.
+
+### 6. Coverage Analysis
+
+Compare intent against source text:
+
+```bash
+intentspec coverage intent.yaml --source AGENTS.md
+  Overall Coverage: 78%
+  Tool coverage: 100% (3/3 tools declared)
+  Goal coverage: 67% (2/3 goals match source)
+  Constraint coverage: 50% (1/2 constraints declared)
+```
 
 GitHub Action:
 
@@ -96,7 +129,7 @@ GitHub Action:
     strict: true
 ```
 
-### 5. Track Changes
+### 7. Track Changes
 
 Git-integrated diff shows what changed in your agent's intent:
 
@@ -105,7 +138,7 @@ intentspec diff intent.yaml
 intentspec diff --source-commit abc1234
 ```
 
-### 6. Monitor Health
+### 8. Monitor Health
 
 Terminal dashboard shows coverage trends, stale intents, and IDS distribution:
 
@@ -119,7 +152,7 @@ Web dashboard with Chart.js charts:
 intentspec dashboard --serve --port 8080
 ```
 
-### 7. Detect Drift
+### 9. Detect Drift
 
 Find specs that haven't been updated in 30+ days:
 
@@ -127,7 +160,7 @@ Find specs that haven't been updated in 30+ days:
 intentspec drift --threshold-days 30
 ```
 
-### 8. Audit & Compliance
+### 10. Audit & Compliance
 
 Generate compliance reports for SOC 2 / EU AI Act:
 
