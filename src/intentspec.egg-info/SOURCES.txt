@@ -3,6 +3,8 @@ pyproject.toml
 src/intentspec/__init__.py
 src/intentspec/audit.py
 src/intentspec/cli.py
+src/intentspec/drift.py
+src/intentspec/health.py
 src/intentspec.egg-info/PKG-INFO
 src/intentspec.egg-info/SOURCES.txt
 src/intentspec.egg-info/dependency_links.txt
@@ -10,7 +12,10 @@ src/intentspec.egg-info/entry_points.txt
 src/intentspec.egg-info/requires.txt
 src/intentspec.egg-info/top_level.txt
 src/intentspec/adapters/__init__.py
+src/intentspec/adapters/autogen.py
 src/intentspec/adapters/crewai.py
+src/intentspec/adapters/langgraph.py
+src/intentspec/adapters/openai_agents.py
 src/intentspec/ci/__init__.py
 src/intentspec/ci/config.py
 src/intentspec/converter/__init__.py
@@ -24,6 +29,7 @@ src/intentspec/converter/skill_md.py
 src/intentspec/converter/types.py
 src/intentspec/coverage/__init__.py
 src/intentspec/coverage/analyzer.py
+src/intentspec/dashboard/__init__.py
 src/intentspec/diff/__init__.py
 src/intentspec/lint/__init__.py
 src/intentspec/models/__init__.py
@@ -35,6 +41,9 @@ src/intentspec/spec/formatter.py
 src/intentspec/spec/schema.py
 src/intentspec/spec/validate.py
 tests/test_adapters.py
+tests/test_adapters_autogen.py
+tests/test_adapters_langgraph.py
+tests/test_adapters_openai_agents.py
 tests/test_audit.py
 tests/test_benchmark_converter.py
 tests/test_ci.py
@@ -51,9 +60,13 @@ tests/test_converter_parse.py
 tests/test_converter_skill_md.py
 tests/test_converter_types.py
 tests/test_coverage.py
+tests/test_coverage_final.py
 tests/test_coverage_uplift.py
+tests/test_dashboard.py
 tests/test_diff.py
+tests/test_format_validation.py
 tests/test_formatter.py
+tests/test_health_drift.py
 tests/test_performance.py
 tests/test_score_ids.py
 tests/test_templates.py
