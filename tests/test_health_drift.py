@@ -59,6 +59,15 @@ class TestRunHealth:
         assert result.scanned == 1
         assert result.valid == 1
         assert result.avg_score > 0
+        assert result.orphaned == 1
+
+    def test_health_not_orphaned_with_agents_md(self, tmp_path):
+        (tmp_path / "AGENTS.md").write_text("# Agent\n", encoding="utf-8")
+        (tmp_path / "intent.yaml").write_text(
+            "version: '1.0'\nagent:\n  name: test\n  type: custom\n  description: test agent\nintent: {}\n"
+        )
+        result = run_health(str(tmp_path))
+        assert result.orphaned == 0
 
     def test_health_with_invalid_file(self, tmp_path):
         (tmp_path / "intent.yaml").write_text("invalid: yaml: [")
@@ -100,10 +109,17 @@ class TestCLIHealth:
         )
         runner = CliRunner()
         result = runner.invoke(main, ["health", str(tmp_path)])
-        assert result.exit_code == 0
+        assert result.exit_code == 2  # orphaned spec warning
         assert "Health Report" in result.output
 
+    def test_health_exit_code_invalid(self, tmp_path):
+        (tmp_path / "intent.yaml").write_text("invalid: yaml: [")
+        runner = CliRunner()
+        result = runner.invoke(main, ["health", str(tmp_path)])
+        assert result.exit_code == 1
+
     def test_health_json(self, tmp_path):
+        (tmp_path / "AGENTS.md").write_text("# Agent\n", encoding="utf-8")
         (tmp_path / "intent.yaml").write_text(
             "version: '1.0'\nagent:\n  name: test\n  type: custom\n  description: test agent\nintent: {}\n"
         )
@@ -114,6 +130,7 @@ class TestCLIHealth:
         assert "scanned" in data
 
     def test_health_yaml(self, tmp_path):
+        (tmp_path / "AGENTS.md").write_text("# Agent\n", encoding="utf-8")
         (tmp_path / "intent.yaml").write_text(
             "version: '1.0'\nagent:\n  name: test\n  type: custom\n  description: test agent\nintent: {}\n"
         )

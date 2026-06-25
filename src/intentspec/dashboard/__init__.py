@@ -1,7 +1,7 @@
 """Dashboard web UI for IntentSpec — FastAPI + Chart.js.
 
 Local server showing coverage trends, IDS scores, stale intents.
-Chart.js bundled locally (no CDN).
+Chart.js loaded from CDN to keep the package small.
 
 Usage:
     intentspec dashboard --serve [--port 8080] [--host 127.0.0.1]

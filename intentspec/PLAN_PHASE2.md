@@ -25,19 +25,26 @@
 
 **Total: 7 weeks (6 dev + 1 validation buffer)**
 
-### Features (in execution order)
+### Features (Revised Execution Order)
 
-| # | Feature | Priority | Effort | Deliverable | Market Signal |
+**Sprint 1: Foundation**
+| # | Feature | Priority | Effort | Deliverable | Justification |
 |---|---------|----------|--------|-------------|---------------|
-| 1 | MCP intent enforcement (`enforce`) | P0 | 1 week | `intentspec enforce --mcp` — intent-first: validate MCP tool capabilities against intent spec (what agent SHOULD do), not just scan permissions | MCP security explosion; differentiator vs agentshield/HexStrike |
-| 2 | EU AI Act compliance pack | P0 | 1 week | `intentspec compliance eu-ai-act` — generated FROM intent specs, not questionnaire. Legal disclaimer included. | EuConform 71★, 127pts HN |
-| 3 | Linting rules engine v2 (`lint`) | P0 | 1 week | 15+ built-in rules, configurable, disableable. Positioned as "CI/CD-time intent linting" vs runtime enforcement (Cupcake/Arden/Latch) | Agent governance category forming |
-| 4 | Framework adapter: LangGraph | P1 | 3-4 days | `intentspec init --from langgraph.json` | PDD v1.1 item; ecosystem adoption |
-| 5 | Framework adapter: AutoGen | P1 | 3-4 days | `intentspec init --from autogen.json` | PDD v1.1 item |
-| 6 | Framework adapter: OpenAI Agents SDK | P1 | 3-4 days | `intentspec init --from openai-agents.yaml` | PDD v1.1 item |
-| 7 | Coverage badges (`badge`) | P2 | 2-3 days | SVG badge: `intent-coverage: N%` for README | Standard OSS practice |
-| 8 | Converter accuracy improvements | P1 | 1 week | ≥75% field-level accuracy (from ~70%). Same 20-file benchmark. | SkillsBench validates evaluation matters |
-| 9 | Schema migration: v1.0 → v1.1 | P0 | 2-3 days | `intentspec migrate` — additive only, no breaking changes | Audit finding: was missing |
+| 1 | Schema migration: v1.0 → v1.1 | P0 | 2-3 days | `intentspec migrate` — additive only, no breaking changes | Foundation for all future features |
+| 2 | Converter accuracy benchmark | P0 | 1-2 days | Test suite established for 20-file benchmark | Need baseline before improvements |
+
+**Sprint 2: The Core Moat**
+| # | Feature | Priority | Effort | Deliverable | Justification |
+|---|---------|----------|--------|-------------|---------------|
+| 3 | Converter accuracy improvements | P0 | 1 week | ≥75% field-level accuracy (from ~70%) | Core value prop differentiation |
+| 4 | Linting rules engine v2 (`lint`) | P1 | 1 week | 15+ built-in rules, configurable | Solidifies intent enforcement |
+
+**Sprint 3: The Market Play**
+| # | Feature | Priority | Effort | Deliverable | Justification |
+|---|---------|----------|--------|-------------|---------------|
+| 5 | MCP intent enforcement (`enforce`) | P0 | 1 week | `intentspec enforce --mcp` — intent-first | MCP security is red-hot market signal |
+
+*(Note: Framework adapters, EU AI Act pack, and coverage badges deferred to Phase 2B to maintain focus on core moat and highest-leverage market plays.)*
 
 ### Edge Cases
 
@@ -119,24 +126,32 @@ These features were in the original plan but deferred per audit findings:
 
 ## Linear Issues
 
-### Pre-Phase-2A
+### Pre-Phase-2A (Sprint 1: Foundation)
 | Issue | Title | Priority |
 |-------|-------|----------|
 | ONI-184 | Audit/close ONI-156..ONI-165 (v1.0 cleanup) | P0 |
 | ONI-185 | Establish converter accuracy benchmark baseline | P0 |
+| ONI-194 | Schema migration: v1.0 → v1.1 | P0 |
 
-### Phase 2A
+### Phase 2A (Sprint 2: The Core Moat)
+| Issue | Title | Priority |
+|-------|-------|----------|
+| ONI-193 | Converter accuracy improvements (≥75%) | P0 |
+| ONI-188 | `intentspec lint` — linting rules engine v2 (CI/CD-time) | P1 |
+
+### Phase 2A (Sprint 3: The Market Play)
 | Issue | Title | Priority |
 |-------|-------|----------|
 | ONI-186 | `intentspec enforce --mcp` — MCP intent enforcement (intent-first) | P0 |
-| ONI-187 | EU AI Act compliance pack (generated FROM intent specs) | P0 |
-| ONI-188 | `intentspec lint` — linting rules engine v2 (CI/CD-time) | P0 |
+
+### Deferred to Phase 2B
+| Issue | Title | Priority |
+|-------|-------|----------|
+| ONI-187 | EU AI Act compliance pack (generated FROM intent specs) | P1 |
 | ONI-189 | Framework adapter: LangGraph | P1 |
 | ONI-190 | Framework adapter: AutoGen | P1 |
 | ONI-191 | Framework adapter: OpenAI Agents SDK | P1 |
 | ONI-192 | `intentspec badge` — coverage badge SVG | P2 |
-| ONI-193 | Converter accuracy improvements (≥75%) | P1 |
-| ONI-194 | Schema migration: v1.0 → v1.1 | P0 |
 
 ### Validation Checkpoint
 | Issue | Title | Priority |

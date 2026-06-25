@@ -47,7 +47,7 @@ def parse(
     Args:
         path: Path to a markdown file (AGENTS.md / SKILL.md) or an agentskills
             directory.
-        use_llm: When True, attempt LLM augmentation (placeholder until F8).
+        use_llm: When True, augment low-confidence fields via OpenRouter (opt-in).
         format: When set, forces the format detector. One of "agents_md",
             "skill_md", "agentskills". When None, auto-detection is used.
 
@@ -81,9 +81,9 @@ def parse(
         result = parse_agentskills(p)
 
     if use_llm:
-        result.warnings.append(
-            "LLM augmentation requested but not yet wired (F8); returning rule-based result."
-        )
+        from intentspec.converter.llm_extract import augment
+
+        result = augment(result)
     return result
 
 

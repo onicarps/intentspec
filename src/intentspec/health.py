@@ -5,18 +5,14 @@ Shows coverage trend, stale intents, orphaned specs, and IDS distribution.
 from __future__ import annotations
 
 import glob
-import json
-import os
-import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from intentspec.models.intent import IntentValidationError
 from intentspec.score.ids import compute_ids, IdsResult
+from intentspec.source_resolve import is_orphaned
 from intentspec.spec.validate import validate_file
 
 
@@ -110,28 +106,6 @@ def _is_stale(path: Path, max_days: int = 30) -> bool:
         return False
 
 
-def _is_orphaned(path: Path) -> bool:
-    """Check if intent.yaml has no matching source file (AGENTS.md, SKILL.md, etc.)."""
-    parent = path.parent
-    # Check for common source files
-    for pattern in ["AGENTS.md", "SKILL.md", "crewai.yaml", "langgraph.yaml",
-                    "autogen-config.yaml", "openai-agents.yaml"]:
-        if (parent / pattern).exists():
-            return False
-    # Check git history for deleted source files
-    try:
-        result = subprocess.run(
-            ["git", "log", "--oneline", "--diff-filter=D", "--", str(parent)],
-            capture_output=True, text=True, timeout=5,
-            cwd=str(parent)
-        )
-        # If there are deleted files in git, spec might be orphaned
-        # This is a heuristic — not definitive
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        pass
-    return False
-
-
 def run_health(path: str = ".", *, stale_days: int = 30) -> HealthResult:
     """Run health check on intent.yaml files.
 
@@ -176,7 +150,7 @@ def run_health(path: str = ".", *, stale_days: int = 30) -> HealthResult:
                 result.stale_files.append(str(f))
 
             # Orphaned check
-            if _is_orphaned(f):
+            if is_orphaned(f):
                 result.orphaned += 1
                 result.orphaned_files.append(str(f))
 

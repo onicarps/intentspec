@@ -36,8 +36,19 @@ intentspec ci --min-coverage 80
 | **Lint** | `lint` | Quality checks (goal length, tool rationale, duplicates, etc.) |
 | **CI** | `ci` | Unified hook: validate + lint + score + coverage in one pass |
 | **Audit** | `audit-report` | SOC 2 / EU AI Act compliance report with SHA-256 hash |
-| **Convert** | `init --from` | Import from AGENTS.md, SKILL.md, agentskills, CrewAI |
+| **Convert** | `init --from` | Import from AGENTS.md, SKILL.md, agentskills, CrewAI, LangGraph, AutoGen, OpenAI Agents |
 | **Templates** | `init --template` | 5 built-in agent templates |
+| **Health** | `health` | Terminal dashboard — coverage, IDS, stale/orphaned specs |
+| **Drift** | `drift` | Detect stale intents (source file age vs last commit) |
+| **Dashboard** | `dashboard --serve` | Web dashboard for coverage trends and IDS scores |
+
+### New: Source Resolution
+
+IntentSpec now resolves original agent source files (AGENTS.md, SKILL.md, framework configs) for any intent.yaml:
+
+- `# Source:` header provenance (written by `intentspec init`)
+- Sibling filename matching (AGENTS.md, SKILL.md, crewai.yaml, etc.)
+- Orphaned spec detection (`health` and `drift` report specs with no source)
 
 ## Installation
 

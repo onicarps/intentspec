@@ -26,6 +26,7 @@ from intentspec.ci.config import (
     resolve_ci_settings,
 )
 from intentspec.coverage import analyze_coverage
+from intentspec.source_resolve import resolve_source_for_intent
 from intentspec.lint import lint_intent
 from intentspec.models.intent import IntentValidationError
 from intentspec.score.ids import compute_ids
@@ -264,7 +265,14 @@ def _evaluate_file(
     lint_warnings = [issue.message for issue in lint_result.warnings]
 
     score = compute_ids(intent).score
-    coverage = round(analyze_coverage(intent, source_path=str(file_path)).overall * 100)
+    source = resolve_source_for_intent(file_path)
+    coverage = round(
+        analyze_coverage(
+            intent,
+            source_path=str(source) if source else None,
+        ).overall
+        * 100
+    )
     coverage_below_threshold = min_coverage > 0 and coverage < min_coverage
 
     exit_code = _per_file_code(

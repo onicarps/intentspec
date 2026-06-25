@@ -25,6 +25,7 @@ from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
 from intentspec.converter.types import ConverterError, ParseResult
 from intentspec.coverage import analyze_coverage
+from intentspec.source_resolve import resolve_source_for_intent
 from intentspec.diff import run_diff
 from intentspec.lint import lint_intent
 from intentspec.models.intent import IntentValidationError
@@ -198,7 +199,11 @@ def coverage(path: str, output_format: str):
         try:
             result = validate_file(f)
             intent = result[0]
-            cov = analyze_coverage(intent, source_path=str(f))
+            source = resolve_source_for_intent(f)
+            cov = analyze_coverage(
+                intent,
+                source_path=str(source) if source else None,
+            )
 
             if output_format == "json":
                 import json
@@ -321,9 +326,6 @@ def init(
     except ConverterError as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
-
-    if use_llm:
-        click.echo("Warning: --use-llm is a placeholder until F8; LLM augmentation skipped.", err=True)
 
     # Run interactive review if enabled and stdout is a TTY
     if interactive and not skip_interactive and sys.stdout.isatty():
@@ -708,7 +710,11 @@ def health(path: str, stale_days: int, output_format: str):
     else:
         click.echo(result.to_text())
 
-    sys.exit(0 if result.errors else 0)
+    if result.errors or result.invalid > 0:
+        sys.exit(1)
+    if result.stale > 0 or result.orphaned > 0:
+        sys.exit(2)
+    sys.exit(0)
 
 
 @main.command()

@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from intentspec.source_resolve import find_sibling_source
+
 
 @dataclass
 class DriftResult:
@@ -65,18 +67,15 @@ def _get_last_commit_age_days(path: Path) -> float | None:
 
 def _get_source_file_age_days(path: Path) -> float | None:
     """Get days since source file (AGENTS.md etc.) was last modified."""
-    parent = path.parent
-    for pattern in ["AGENTS.md", "SKILL.md", "crewai.yaml", "langgraph.yaml",
-                    "autogen-config.yaml", "openai-agents.yaml"]:
-        src = parent / pattern
-        if src.exists():
-            try:
-                mtime = src.stat().st_mtime
-                now = datetime.now(timezone.utc).timestamp()
-                return (now - mtime) / 86400
-            except OSError:
-                pass
-    return None
+    src = find_sibling_source(path)
+    if src is None:
+        return None
+    try:
+        mtime = src.stat().st_mtime
+        now = datetime.now(timezone.utc).timestamp()
+        return (now - mtime) / 86400
+    except OSError:
+        return None
 
 
 def run_drift(path: str = ".", *, threshold_days: int = 30) -> DriftResult:

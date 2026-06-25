@@ -25,8 +25,33 @@ FIXTURE_DIR = Path(__file__).parent / "fixtures"
 VALID = str(FIXTURE_DIR / "valid_intent.yaml")
 INVALID = str(FIXTURE_DIR / "invalid_intent.yaml")
 
-# Computed coverage percentage for valid_intent.yaml (round(overall * 100)).
-VALID_COVERAGE = 45
+# valid_intent.yaml has no sibling source — coverage defaults to 100%.
+VALID_COVERAGE = 100
+# Threshold above VALID_COVERAGE to trigger coverage_below_threshold failures.
+ABOVE_VALID_COVERAGE = 101
+
+_LOW_COVERAGE_AGENTS = """# Test Agent
+
+## Goals
+- Ship features quickly
+
+## Tools
+Use `alpha-tool` and `beta-tool` and `gamma-tool`.
+"""
+
+_LOW_COVERAGE_INTENT = """version: "1.0"
+agent:
+  name: low-cov-agent
+  type: custom
+  description: Agent with incomplete tool coverage for CI tests
+intent:
+  goals:
+    - description: Ship features quickly with quality checks in place
+  tools:
+    allowed:
+      - name: alpha-tool
+        rationale: Primary interface tool
+"""
 
 
 def _write(dirpath: Path, body: str, name: str = "intent.yaml") -> str:
@@ -113,7 +138,7 @@ def test_run_ci_lint_error_returns_1(tmp_path: Path) -> None:
 
 
 def test_run_ci_coverage_below_threshold_returns_3() -> None:
-    result = run_ci([VALID], min_coverage=100)
+    result = run_ci([VALID], min_coverage=ABOVE_VALID_COVERAGE)
     f = result.files[0]
     assert f.coverage == VALID_COVERAGE
     assert f.coverage_below_threshold is True
@@ -160,7 +185,7 @@ def test_run_ci_empty_file_returns_3(tmp_path: Path) -> None:
 
 
 def test_run_ci_fatal_beats_error_single_file() -> None:
-    result = run_ci([INVALID], min_coverage=100)
+    result = run_ci([INVALID], min_coverage=ABOVE_VALID_COVERAGE)
     f = result.files[0]
     assert f.schema_errors  # error tier present
     assert f.coverage_below_threshold is True
@@ -170,7 +195,7 @@ def test_run_ci_fatal_beats_error_single_file() -> None:
 
 def test_run_ci_strict_does_not_change_clean_or_fatal() -> None:
     assert run_ci([VALID], strict=True).exit_code == 0
-    assert run_ci([VALID], min_coverage=100, strict=True).exit_code == 3
+    assert run_ci([VALID], min_coverage=ABOVE_VALID_COVERAGE, strict=True).exit_code == 3
     assert run_ci([str(FIXTURE_DIR / "nope.yaml")], strict=True).exit_code == 3
 
 
@@ -577,6 +602,13 @@ def _copy_valid(dirpath: Path, name: str = "intent.yaml") -> Path:
     return path
 
 
+def _write_low_coverage_spec(dirpath: Path) -> Path:
+    (dirpath / "AGENTS.md").write_text(_LOW_COVERAGE_AGENTS, encoding="utf-8")
+    path = dirpath / "intent.yaml"
+    path.write_text(_LOW_COVERAGE_INTENT, encoding="utf-8")
+    return path
+
+
 def test_cli_group_help_lists_ci(runner: CliRunner) -> None:
     result = runner.invoke(main, ["--help"])
     assert result.exit_code == 0
@@ -683,8 +715,9 @@ def test_cli_yaml_format_matches_json(runner: CliRunner) -> None:
     assert yaml.safe_load(yaml_result.output) == json.loads(json_result.output)
 
 
-def test_cli_below_threshold_exits_3(runner: CliRunner) -> None:
-    result = runner.invoke(main, ["ci", VALID, "--min-coverage", "100"])
+def test_cli_below_threshold_exits_3(runner: CliRunner, tmp_path: Path) -> None:
+    spec = _write_low_coverage_spec(tmp_path)
+    result = runner.invoke(main, ["ci", str(spec), "--min-coverage", "80"])
     assert result.exit_code == 3
 
 
@@ -720,9 +753,9 @@ def test_cli_malformed_config_exits_3(runner: CliRunner, tmp_path: Path) -> None
 
 
 def test_cli_config_min_coverage_takes_effect(runner: CliRunner, tmp_path: Path) -> None:
-    spec = _copy_valid(tmp_path)
+    spec = _write_low_coverage_spec(tmp_path)
     cfg = tmp_path / "ci.yaml"
-    cfg.write_text("min_coverage: 100\n", encoding="utf-8")
+    cfg.write_text("min_coverage: 80\n", encoding="utf-8")
     result = runner.invoke(main, ["ci", str(spec), "--config", str(cfg)])
     assert result.exit_code == 3  # config threshold applied, no CLI flag passed
 
@@ -738,21 +771,21 @@ def test_cli_flag_overrides_config(runner: CliRunner, tmp_path: Path) -> None:
 
 
 def test_cli_env_overrides_config(runner: CliRunner, tmp_path: Path) -> None:
-    spec = _copy_valid(tmp_path)
+    spec = _write_low_coverage_spec(tmp_path)
     cfg = tmp_path / "ci.yaml"
     cfg.write_text("min_coverage: 0\n", encoding="utf-8")
     result = runner.invoke(
         main,
         ["ci", str(spec), "--config", str(cfg)],
-        env={"INTENTSPEC_MIN_COVERAGE": "100"},
+        env={"INTENTSPEC_MIN_COVERAGE": "80"},
     )
     assert result.exit_code == 3  # env beats config
 
 
 def test_cli_auto_discovers_config_in_cwd(runner: CliRunner, tmp_path: Path) -> None:
     with runner.isolated_filesystem(temp_dir=tmp_path) as cwd:
-        _copy_valid(Path(cwd))
-        Path(cwd, ".intentspec.yaml").write_text("min_coverage: 100\n", encoding="utf-8")
+        _write_low_coverage_spec(Path(cwd))
+        Path(cwd, ".intentspec.yaml").write_text("min_coverage: 80\n", encoding="utf-8")
         result = runner.invoke(main, ["ci", "intent.yaml"])
     assert result.exit_code == 3
 
