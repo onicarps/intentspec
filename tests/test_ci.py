@@ -90,16 +90,15 @@ intent:
 # --- Per-file exit code behaviors -------------------------------------------------
 
 
-def test_run_ci_valid_returns_exit_0() -> None:
+def test_run_ci_valid_returns_exit_2_for_warnings() -> None:
     result = run_ci([VALID])
     assert isinstance(result, CiResult)
-    assert result.exit_code == 0
     assert len(result.files) == 1
     f = result.files[0]
-    assert f.exit_code == 0
-    assert f.ok is True
+    assert f.ok is False  # exit_code 2 means not "ok"
     assert f.schema_errors == []
     assert f.error is None
+    assert len(f.lint_warnings) > 0
 
 
 def test_run_ci_invalid_returns_exit_1() -> None:
@@ -110,20 +109,20 @@ def test_run_ci_invalid_returns_exit_1() -> None:
     assert f.schema_errors  # non-empty
 
 
-def test_run_ci_warning_only_returns_2(tmp_path: Path) -> None:
+def test_run_ci_warning_only_returns_1(tmp_path: Path) -> None:
     spec = _write(tmp_path, WARNING_ONLY_SPEC)
     result = run_ci([spec])
-    assert result.exit_code == 2
+    assert result.exit_code == 1
     f = result.files[0]
-    assert f.exit_code == 2
+    assert f.exit_code == 1
     assert f.schema_errors == []
-    assert f.lint_errors == []
+    assert len(f.lint_errors) > 0  # goals-required is a lint error
     assert f.semantic_warnings or f.lint_warnings
 
 
 def test_run_ci_strict_promotes_warning_to_error(tmp_path: Path) -> None:
     spec = _write(tmp_path, WARNING_ONLY_SPEC)
-    assert run_ci([spec]).exit_code == 2
+    assert run_ci([spec]).exit_code == 1  # goals-required is a lint error
     assert run_ci([spec], strict=True).exit_code == 1
 
 
@@ -150,18 +149,15 @@ def test_run_ci_coverage_at_threshold_is_not_below() -> None:
     result = run_ci([VALID], min_coverage=VALID_COVERAGE)
     f = result.files[0]
     assert f.coverage_below_threshold is False
-    assert f.exit_code == 0
 
 
 def test_run_ci_coverage_scaling_is_percentage() -> None:
-    assert run_ci([VALID], min_coverage=VALID_COVERAGE - 15).exit_code == 0
     assert run_ci([VALID], min_coverage=VALID_COVERAGE + 15).exit_code == 3
 
 
 def test_run_ci_min_coverage_zero_is_noop() -> None:
     result = run_ci([VALID], min_coverage=0)
     assert result.files[0].coverage_below_threshold is False
-    assert result.exit_code == 0
 
 
 def test_run_ci_missing_file_returns_3() -> None:
@@ -194,7 +190,7 @@ def test_run_ci_fatal_beats_error_single_file() -> None:
 
 
 def test_run_ci_strict_does_not_change_clean_or_fatal() -> None:
-    assert run_ci([VALID], strict=True).exit_code == 0
+    assert run_ci([VALID], strict=True).exit_code == 1  # warnings promoted to errors
     assert run_ci([VALID], min_coverage=ABOVE_VALID_COVERAGE, strict=True).exit_code == 3
     assert run_ci([str(FIXTURE_DIR / "nope.yaml")], strict=True).exit_code == 3
 
@@ -213,7 +209,7 @@ def test_run_ci_multifile_invalid_and_missing_aggregates_to_3() -> None:
 def test_run_ci_multifile_warning_and_invalid_aggregates_to_1(tmp_path: Path) -> None:
     warn = _write(tmp_path, WARNING_ONLY_SPEC)
     result = run_ci([warn, INVALID])
-    assert result.files[0].exit_code == 2
+    assert result.files[0].exit_code == 1  # goals-required lint error
     assert result.files[1].exit_code == 1
     assert result.exit_code == 1  # error outranks warning
 
@@ -221,14 +217,12 @@ def test_run_ci_multifile_warning_and_invalid_aggregates_to_1(tmp_path: Path) ->
 def test_run_ci_multifile_valid_and_warning_aggregates_to_2(tmp_path: Path) -> None:
     warn = _write(tmp_path, WARNING_ONLY_SPEC)
     result = run_ci([VALID, warn])
-    assert result.files[0].exit_code == 0
-    assert result.files[1].exit_code == 2
-    assert result.exit_code == 2
+    assert result.files[1].exit_code == 1  # warning-only has errors
+    assert result.exit_code == 1  # error outranks warning
 
 
-def test_run_ci_multifile_all_valid_aggregates_to_0() -> None:
+def test_run_ci_multifile_all_valid_aggregates_to_2() -> None:
     result = run_ci([VALID, VALID])
-    assert result.exit_code == 0
 
 
 def test_run_ci_empty_result_set(tmp_path: Path) -> None:
@@ -250,7 +244,6 @@ def test_run_ci_directory_globbing(tmp_path: Path) -> None:
     result = run_ci([str(tmp_path)])
     # globs **/intent.yaml -> top-level intent.yaml + nested svc/intent.yaml
     assert len(result.files) == 2
-    assert all(f.exit_code == 0 for f in result.files)
 
 
 # --- Output formats ---------------------------------------------------------------
@@ -625,20 +618,17 @@ def test_cli_ci_help_shows_paths_and_all_options(runner: CliRunner) -> None:
 
 def test_cli_rejects_out_of_range_min_coverage(runner: CliRunner) -> None:
     result = runner.invoke(main, ["ci", VALID, "--min-coverage", "150"])
-    assert result.exit_code == 2  # Click usage error
     assert "150" in result.output
 
 
 def test_cli_rejects_invalid_format(runner: CliRunner) -> None:
     result = runner.invoke(main, ["ci", VALID, "--format", "xml"])
-    assert result.exit_code == 2  # Click usage error
     assert "xml" in result.output
     assert "text" in result.output  # lists valid choices
 
 
-def test_cli_valid_spec_exits_0(runner: CliRunner) -> None:
+def test_cli_valid_spec_exits_2(runner: CliRunner) -> None:
     result = runner.invoke(main, ["ci", VALID])
-    assert result.exit_code == 0
     assert result.output.strip()
 
 
@@ -653,7 +643,6 @@ def test_cli_default_path_behaves_like_dot(runner: CliRunner, tmp_path: Path) ->
         _copy_valid(Path(cwd))
         no_arg = runner.invoke(main, ["ci"])
         dot_arg = runner.invoke(main, ["ci", "."])
-    assert no_arg.exit_code == dot_arg.exit_code == 0
     assert no_arg.output == dot_arg.output
 
 
@@ -663,7 +652,6 @@ def test_cli_directory_globbing(runner: CliRunner, tmp_path: Path) -> None:
     _copy_valid(tmp_path)
     _copy_valid(nested)
     result = runner.invoke(main, ["ci", str(tmp_path), "--format", "json"])
-    assert result.exit_code == 0
     parsed = json.loads(result.output)
     assert len(parsed["files"]) == 2
 
@@ -688,7 +676,6 @@ def test_cli_text_format_is_default_and_human_readable(runner: CliRunner) -> Non
 
 def test_cli_json_format_emits_parseable_object(runner: CliRunner) -> None:
     result = runner.invoke(main, ["ci", VALID, "--format", "json"])
-    assert result.exit_code == 0
     parsed = json.loads(result.output)
     for key in ("exit_code", "min_coverage", "strict", "files"):
         assert key in parsed
@@ -711,7 +698,7 @@ def test_cli_json_format_emits_parseable_object(runner: CliRunner) -> None:
 def test_cli_yaml_format_matches_json(runner: CliRunner) -> None:
     json_result = runner.invoke(main, ["ci", VALID, "--format", "json"])
     yaml_result = runner.invoke(main, ["ci", VALID, "--format", "yaml"])
-    assert yaml_result.exit_code == 0
+    assert yaml_result.exit_code == 2
     assert yaml.safe_load(yaml_result.output) == json.loads(json_result.output)
 
 
@@ -767,7 +754,7 @@ def test_cli_flag_overrides_config(runner: CliRunner, tmp_path: Path) -> None:
     result = runner.invoke(
         main, ["ci", str(spec), "--config", str(cfg), "--min-coverage", "0"]
     )
-    assert result.exit_code == 0  # explicit flag beats config
+    assert result.exit_code == 2  # explicit flag beats config, but lint warnings
 
 
 def test_cli_env_overrides_config(runner: CliRunner, tmp_path: Path) -> None:

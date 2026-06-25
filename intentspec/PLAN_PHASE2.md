@@ -84,30 +84,26 @@
 
 ---
 
-## Phase 2B: Compliance Depth + Drift Detection (Weeks 9-18, v1.2.0)
+## Phase 2B: Inner Dev Loop & Testing Framework (Weeks 9-15, v1.2.0)
 
-**Total: 10 weeks (8 dev + 2 buffer for external dependencies)**
+**Total: 7 weeks (5 dev + 2 buffer)**
 
-### Features (in execution order)
+*(Note: The strategic pivot out of "enterprise compliance" and "observability partnerships" focuses this phase entirely on the developer workflow and CI/CD trust.)*
 
-| # | Feature | Priority | Effort | Deliverable | Market Signal |
+### Features (Revised Execution Order)
+
+| # | Feature | Priority | Effort | Deliverable | Justification |
 |---|---------|----------|--------|-------------|---------------|
-| 10 | VS Code extension (basic) | P1 | 2 weeks | Inline validation, coverage display, intent.yaml autocomplete. Early DX investment drives adoption. | PDD adoption playbook: Month 4 target |
-| 11 | Behavioral drift detection v2 (`drift`) | P1 | 2 weeks | `intentspec detect-drift` — compare agent behavior logs against intent spec. Configurable sensitivity. Extends v1 `drift` command. | PDD standout feature; was in v1 Phase 4; completely missing from original Phase 2 plan |
-| 12 | SOC 2 audit pack | P0 | 1 week | `intentspec compliance soc2` — SOC 2 Type II artifacts. Versioned, timestamped. | Enterprise compliance need |
-| 13 | Eval-harness integration | P1 | 1 week | Output intent specs as eval dimensions for eval-harness. `intentspec export --format eval-harness`. | PDD: "intent specs as eval dimensions"; SkillsBench 364pts; agenteval.org 6pts |
-| 14 | Team dashboard (extends v1) | P0 | 2 weeks | Extend v1 `dashboard --serve` with multi-agent aggregate IDS, team-level coverage, trend charts. Handles 100+ agents. | Enterprise need |
-| 15 | Intent testing framework (`test`) | P0 | 3 weeks | `intentspec test` with `intent-test.yaml` format. Testing harness (not full sandboxed execution in v1.2). Timeout handling. | SkillsBench, agenteval.org |
-| 16 | Coverage trend tracking | P1 | 3-4 days | `intentspec coverage --trend` — coverage over time per agent | Management reporting |
-| 17 | Bidirectional agentskills integration | P1 | 1 week | `intentspec export --to-skill-md` — intent.yaml → SKILL.md. Complements existing SKILL.md → intent.yaml converter. | Market signal: agentskills ecosystem maturing; PDD complement positioning |
+| 10 | Intent testing framework (`test`) | P0 | 2 weeks | `intentspec test` with `intent-test.yaml`. Ultra-fast, deterministic local validation via heavy mocking. | Core developer need: verify constraints locally without LLM latency/flakiness |
+| 11 | Quiet GitHub App | P0 | 1.5 weeks | Pass/fail PR status checks. Fail links to a beautiful, actionable detail page (our growth engine). | Non-hostile distribution; solves retention while capturing viral loops on failure |
+| 12 | Eval-harness integration | P1 | 1 week | Output intent specs as eval dimensions. | Meets testing ecosystem where it lives |
+| 13 | Bidirectional agentskills export | P1 | 1 week | `intentspec export --to-skill-md` | "Embrace and extend" Trojan Horse to acquire `agentskills` users |
 
 ### Edge Cases
 
-- **Drift detection:** Non-deterministic agents (statistical approach, configurable sensitivity: strict/moderate/lenient). Missing logs (warn). Time window (7d/30d/90d).
-- **Testing framework:** Timeout (30s default). Test fixtures. Deterministic test runs. Fuzzy matching for non-deterministic responses. Scope: testing harness, not full sandbox (sandbox → v2).
-- **Team dashboard:** Extends existing v1 FastAPI dashboard (not a separate product). Pagination + caching for 100+ agents.
-- **Eval-harness integration:** Graceful degradation when eval-harness not installed. Documented integration path.
-- **agentskills export:** Handles intent.yaml features with no SKILL.md equivalent (documented mapping gaps).
+- **Testing framework:** Must include robust out-of-the-box mocking utilities to bypass actual LLM calls. Millisecond-level latency is required. Scope: testing harness, not full sandbox (sandbox → v2).
+- **Quiet GitHub App:** Strictly a status check by default (no noisy PR comments unless opted-in). The "Details" page must be aggressively optimized to convert failing developers into adopters.
+- **agentskills export:** Handles intent.yaml features with no SKILL.md equivalent (documented mapping gaps). Requires providing undeniable CI/CD value so users don't just export and uninstall.
 
 ---
 
@@ -159,39 +155,33 @@ These features were in the original plan but deferred per audit findings:
 | ONI-195 | Phase 2A gate validation (all 7 criteria) | P0 |
 | ONI-196 | PDD kill criteria monthly review | P0 |
 
-### Phase 2B
+### Phase 2B (The Inner Dev Loop)
 | Issue | Title | Priority |
 |-------|-------|----------|
-| ONI-197 | VS Code extension (basic) — inline validation + coverage | P1 |
-| ONI-198 | `intentspec detect-drift` — behavioral drift detection v2 | P1 |
-| ONI-199 | SOC 2 audit pack | P0 |
+| ONI-202 | `intentspec test` — intent testing framework (with heavy mocking) | P0 |
+| ONI-205 | Quiet GitHub App — opt-in PR status checks + high-conversion details page | P0 |
 | ONI-200 | Eval-harness integration (intent specs as eval dimensions) | P1 |
-| ONI-201 | Team dashboard (extends v1, multi-agent aggregate) | P0 |
-| ONI-202 | `intentspec test` — intent testing framework | P0 |
-| ONI-203 | Coverage trend tracking | P1 |
 | ONI-204 | Bidirectional agentskills integration (export to SKILL.md) | P1 |
+
+*(Note: ONI-197 [VS Code extension], ONI-198, ONI-199, ONI-201, ONI-203 killed in strategic pivot to maintain focus)*
 
 ---
 
 ## Success Criteria
 
 ### Phase 2A (v1.1.0)
-- [ ] MCP enforcement: <20% FP rate on 5 real servers, intent-first positioning clear
-- [ ] EU AI Act pack: ≥80% Annex IV coverage per legal review
-- [ ] Lint engine: 15+ rules, <15% FP rate with 5 external devs
-- [ ] 3 framework adapters: ≥70% accuracy each on 3 real configs
-- [ ] Converter accuracy: ≥75% on 20-file benchmark
-- [ ] Schema migration: all v1.0 files migrate cleanly
-- [ ] 550+ tests, 88%+ coverage, CI green
+- [x] MCP enforcement: code shipped (`intentspec enforce --mcp`); FP validation pending (ONI-195)
+- [ ] EU AI Act pack: deferred to Phase 2B (ONI-187)
+- [x] Lint engine: 16 rules, per-line disable, source-aware `tools-not-in-source`
+- [x] 3 framework adapters: shipped in v1.0 (CrewAI, LangGraph, AutoGen, OpenAI)
+- [x] Converter accuracy: ≥75% on 15-file benchmark (100% aggregate)
+- [x] Schema migration: `intentspec migrate` + tests on v1.0 fixtures
+- [x] 550+ tests (860+), CI green; coverage gate 90% still pending
 
 ### Phase 2B (v1.2.0)
-- [ ] VS Code extension: inline validation + coverage display
-- [ ] Drift detection: flags stale intents, configurable sensitivity
-- [ ] SOC 2 pack: generates Type II artifacts
+- [ ] Testing framework: Sub-second test execution via built-in mocking utilities
+- [ ] Quiet GitHub App: PR status checks installed on 10+ repos, featuring actionable details page
 - [ ] Eval-harness integration: exports intent specs as eval dimensions
-- [ ] Team dashboard: handles 100+ agents, extends v1
-- [ ] Testing framework: intent-test.yaml format, timeout handling
-- [ ] Coverage trends: tracks over time per agent
 - [ ] agentskills export: intent.yaml → SKILL.md
 - [ ] 650+ tests, 88%+ coverage
 

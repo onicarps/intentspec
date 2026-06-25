@@ -8,6 +8,7 @@ from intentspec.source_resolve import (
     find_sibling_source,
     is_orphaned,
     parse_source_from_header,
+    read_source_text,
     resolve_source_for_intent,
 )
 
@@ -71,3 +72,12 @@ def test_resolve_agentskills_directory(tmp_path: Path) -> None:
 
     resolved = resolve_source_for_intent(intent)
     assert resolved == (skill_dir / "SKILL.md").resolve()
+
+
+def test_read_source_text_returns_content(tmp_path: Path) -> None:
+    intent = tmp_path / "intent.yaml"
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text("# Agent\nUse read_file here.\n", encoding="utf-8")
+    intent.write_text("# Source: AGENTS.md\nversion: '1.0'\n", encoding="utf-8")
+
+    assert read_source_text(intent) == "# Agent\nUse read_file here.\n"

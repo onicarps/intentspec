@@ -26,7 +26,7 @@ from intentspec.ci.config import (
     resolve_ci_settings,
 )
 from intentspec.coverage import analyze_coverage
-from intentspec.source_resolve import resolve_source_for_intent
+from intentspec.source_resolve import read_source_text, resolve_source_for_intent
 from intentspec.lint import lint_intent
 from intentspec.models.intent import IntentValidationError
 from intentspec.score.ids import compute_ids
@@ -260,7 +260,15 @@ def _evaluate_file(
     except Exception as exc:  # unreadable / malformed YAML — keep CI traceback-free
         return _error_result(display_path, f"could not process file: {exc}")
 
-    lint_result = lint_intent(intent)
+    try:
+        raw_content = file_path.read_text(encoding="utf-8-sig")
+    except OSError:
+        raw_content = None
+    lint_result = lint_intent(
+        intent,
+        read_source_text(file_path),
+        raw_content=raw_content,
+    )
     lint_errors = [issue.message for issue in lint_result.errors]
     lint_warnings = [issue.message for issue in lint_result.warnings]
 

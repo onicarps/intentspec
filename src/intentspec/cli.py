@@ -14,7 +14,9 @@ from click.core import ParameterSource
 from intentspec.audit import generate_audit
 from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, run_ci
 from intentspec.drift import run_drift
+from intentspec.enforce import enforce_mcp, run_enforce
 from intentspec.health import run_health
+from intentspec.migrate import migrate as migrate_fn, Migrator
 
 try:
     from intentspec.dashboard import serve as _serve_dashboard
@@ -25,7 +27,7 @@ from intentspec.converter import parse as converter_parse, parse_quickstart
 from intentspec.converter.emit import to_full_json, to_full_yaml, to_intent_yaml
 from intentspec.converter.types import ConverterError, ParseResult
 from intentspec.coverage import analyze_coverage
-from intentspec.source_resolve import resolve_source_for_intent
+from intentspec.source_resolve import read_source_text, resolve_source_for_intent
 from intentspec.diff import run_diff
 from intentspec.lint import lint_intent
 from intentspec.models.intent import IntentValidationError
@@ -35,7 +37,7 @@ from intentspec.spec.validate import validate_file, validate_schema, validate_se
 
 
 @click.group()
-@click.version_option(version="0.1.1", prog_name="intentspec")
+@click.version_option(version="1.1.0", prog_name="intentspec")
 def main():
     """IntentSpec — Coverage and enforcement layer for AI agent infrastructure.
 
@@ -668,7 +670,12 @@ def lint(path: str, output_format: str):
         try:
             result = validate_file(f)
             intent = result[0]
-            lint_result = lint_intent(intent)
+            raw_content = f.read_text(encoding="utf-8-sig")
+            lint_result = lint_intent(
+                intent,
+                read_source_text(f),
+                raw_content=raw_content,
+            )
 
             if output_format == "json":
                 import json
@@ -761,6 +768,121 @@ def dashboard(path: str, host: str, port: int):
     click.echo(f"Scanning: {Path(path).resolve()}")
     click.echo("Press Ctrl+C to stop")
     _serve_dashboard(path, host=host, port=port)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def migrate(path: str, output_format: str):
+    """Migrate intent.yaml to latest schema version (additive, non-breaking).
+
+    PATH is the directory or file to migrate. Defaults to current directory.
+    """
+    target = Path(path)
+    if target.is_file():
+        files = [target]
+    elif target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        files = [Path(f) for f in glob.glob(pattern, recursive=True)]
+        if not files:
+            click.echo("No intent.yaml found")
+            sys.exit(0)
+    else:
+        click.echo(f"Path not found: {target}", err=True)
+        sys.exit(3)
+
+    exit_code = 0
+    for f in sorted(files):
+        try:
+            content = f.read_text(encoding="utf-8-sig")
+            migrated = migrate_fn(content)
+
+            if output_format == "json":
+                click.echo(json.dumps({"file": str(f), "migrated": migrated}, indent=2))
+            elif output_format == "yaml":
+                click.echo(f"--- {f} ---")
+                click.echo(migrated)
+            else:
+                click.echo(f"--- {f} ---")
+                click.echo(migrated)
+
+        except ValueError as e:
+            click.echo(f"{f}: error: {e}", err=True)
+            exit_code = 1
+
+    sys.exit(exit_code)
+
+
+@main.command("enforce")
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option(
+    "--mcp",
+    "--mcp-config",
+    "mcp_config",
+    type=click.Path(),
+    default=None,
+    help="Path to MCP server config JSON",
+)
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def enforce(path: str, mcp_config: str | None, output_format: str):
+    """Enforce MCP tool capabilities against intent spec (intent-first).
+
+    Validates that MCP server tools match what the agent SHOULD do
+    (declared in intent spec), not just what it CAN do.
+
+    PATH is the directory or file to enforce. Defaults to current directory.
+    """
+    target = Path(path)
+    if target.is_file():
+        files = [target]
+    elif target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        files = [Path(f) for f in glob.glob(pattern, recursive=True)]
+        if not files:
+            click.echo("No intent.yaml found")
+            sys.exit(0)
+    else:
+        click.echo(f"Path not found: {target}", err=True)
+        sys.exit(3)
+
+    exit_code = 0
+    for f in sorted(files):
+        try:
+            result = validate_file(f)
+            intent = result[0]
+
+            allowed = [t.name for t in intent.tools_allowed] if intent.tools_allowed else []
+            denied = [t.name for t in intent.tools_denied] if intent.tools_denied else []
+            if mcp_config:
+                enf_result = run_enforce(
+                    config_path=mcp_config,
+                    allowed_tools=allowed,
+                    denied_tools=denied,
+                )
+            else:
+                # Use intent's own tools as both allowed and server tools (self-check)
+                enf_result = enforce_mcp(
+                    intent_allowed_tools=allowed,
+                    intent_denied_tools=denied,
+                    server_tools=[],
+                )
+
+            if output_format == "json":
+                click.echo(json.dumps({"file": str(f), **enf_result.to_dict()}, indent=2))
+            elif output_format == "yaml":
+                click.echo(yaml.dump({"file": str(f), **enf_result.to_dict()}, default_flow_style=False))
+            else:
+                click.echo(f"\n{f}")
+                click.echo(enf_result.to_text())
+
+            if enf_result.risks:
+                exit_code = 2
+
+        except Exception as e:
+            click.echo(f"{f}: error: {e}", err=True)
+            exit_code = 1
+
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

@@ -86,3 +86,14 @@ def is_orphaned(intent_path: Path | str) -> bool:
     if not path.is_file():
         return False
     return resolve_source_for_intent(path) is None
+
+
+def read_source_text(intent_path: Path | str) -> str | None:
+    """Read resolved source artifact text for an intent.yaml, if available."""
+    source = resolve_source_for_intent(intent_path)
+    if source is None:
+        return None
+    try:
+        return source.read_text(encoding="utf-8-sig")
+    except OSError:
+        return None
