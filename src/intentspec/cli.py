@@ -12,6 +12,7 @@ import yaml
 from click.core import ParameterSource
 
 from intentspec.audit import generate_audit
+from intentspec.report_card import generate_report_card
 from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, run_ci
 from intentspec.drift import run_drift
 from intentspec.enforce import enforce_mcp, run_enforce
@@ -696,6 +697,61 @@ def audit_report(path: str, output_format: str):
         sys.exit(3)
 
     click.echo(rendered)
+    sys.exit(0)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json", "yaml", "markdown"]),
+    default="text",
+)
+@click.option("-o", "--output", type=click.Path(), help="Write report to file")
+def report(path: str, output_format: str, output: str | None):
+    """Generate a shareable agent report card.
+
+    PATH is the directory or file to report on. Defaults to current directory.
+    """
+    target = Path(path)
+    if target.is_dir():
+        pattern = str(target / "**/intent.yaml")
+        matches = sorted(Path(f) for f in glob.glob(pattern, recursive=True))
+        if not matches:
+            click.echo(f"Error: no intent.yaml found in {target}", err=True)
+            sys.exit(3)
+        target = matches[0]
+
+    try:
+        result = generate_report_card(target)
+    except IntentValidationError as e:
+        for err in e.errors:
+            click.echo(f"validation error: {err}", err=True)
+        sys.exit(1)
+    except (FileNotFoundError, IsADirectoryError, OSError) as e:
+        click.echo(f"Error: cannot read {target}: {e}", err=True)
+        sys.exit(3)
+
+    if output_format == "json":
+        rendered = json.dumps(result.to_dict(), indent=2)
+    elif output_format == "yaml":
+        rendered = yaml.dump(result.to_dict(), default_flow_style=False)
+    elif output_format == "markdown":
+        rendered = result.to_markdown()
+    else:
+        rendered = result.to_text()
+
+    if output:
+        Path(output).write_text(rendered, encoding="utf-8")
+        click.echo(f"Report written to {output}")
+    else:
+        click.echo(rendered)
+
+    if result.lint_errors > 0:
+        sys.exit(1)
+    if result.lint_warnings > 0 or result.grade in {"D", "F"}:
+        sys.exit(2)
     sys.exit(0)
 
 

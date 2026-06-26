@@ -14,8 +14,15 @@ import os
 from pathlib import Path
 from typing import Any
 
-from intentspec.health import run_health
+import tempfile
+
+from intentspec.converter.agents_md import parse_agents_md
+from intentspec.coverage import analyze_coverage
 from intentspec.drift import run_drift
+from intentspec.health import run_health
+from intentspec.lint import lint_intent
+from intentspec.report_card import grade_from_score
+from intentspec.score.ids import compute_ids
 
 
 # Chart.js — loaded from CDN (no local bundle to keep package small)
@@ -197,11 +204,131 @@ def render_dashboard(path: str = ".") -> str:
 </html>"""
 
 
+def analyze_agents_md_text(text: str) -> dict[str, Any]:
+    """Analyze pasted AGENTS.md text and return a demo report card payload."""
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix="AGENTS.md",
+        delete=False,
+        encoding="utf-8",
+    ) as tmp:
+        tmp.write(text)
+        tmp_path = tmp.name
+
+    try:
+        parsed = parse_agents_md(tmp_path)
+        intent = parsed.intent
+        ids = compute_ids(intent)
+        coverage = analyze_coverage(intent, source_text=text)
+        lint = lint_intent(intent, source_text=text)
+
+        risks: list[str] = []
+        if not intent.non_negotiables:
+            risks.append("No non-negotiables declared")
+        if not intent.tools_denied:
+            risks.append("No denied tools — no explicit blocklist")
+        if coverage.overall < 0.7:
+            risks.append(f"Low coverage estimate ({coverage.overall:.0%})")
+        for issue in lint.errors[:3]:
+            risks.append(f"{issue.rule}: {issue.message}")
+
+        return {
+            "agent_name": intent.agent_name,
+            "agent_type": intent.agent_type,
+            "ids_score": round(ids.score, 1),
+            "grade": grade_from_score(ids.score),
+            "coverage_overall": round(coverage.overall, 3),
+            "lint_errors": lint.error_count,
+            "lint_warnings": lint.warning_count,
+            "risks": risks[:6],
+            "confidence": round(parsed.average_confidence, 2),
+        }
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def render_demo_page() -> str:
+    """Render the zero-install AGENTS.md paste demo."""
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntentSpec — Try It Now</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               background: #0f172a; color: #e2e8f0; padding: 2rem; max-width: 960px; margin: 0 auto; }
+        h1 { color: #818cf8; margin-bottom: 0.5rem; }
+        p.lead { color: #94a3b8; margin-bottom: 1.5rem; }
+        textarea { width: 100%; min-height: 220px; background: #1e293b; color: #e2e8f0;
+                   border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;
+                   font-family: ui-monospace, monospace; font-size: 0.875rem; }
+        button { margin-top: 1rem; background: #6366f1; color: #fff; border: none;
+                 padding: 0.75rem 1.25rem; border-radius: 0.25rem; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #4f46e5; }
+        #result { margin-top: 1.5rem; display: none; }
+        .card { background: #1e293b; border-radius: 0.5rem; padding: 1.25rem; }
+        .grade { font-size: 3rem; font-weight: 700; color: #818cf8; }
+        .metric { display: inline-block; margin-right: 1.5rem; margin-top: 0.5rem; }
+        .risks li { color: #f59e0b; margin: 0.25rem 0 0.25rem 1.25rem; }
+        .error { color: #ef4444; margin-top: 1rem; }
+        a { color: #818cf8; }
+    </style>
+</head>
+<body>
+    <h1>IntentSpec — Try It Now</h1>
+    <p class="lead">Paste your AGENTS.md (or similar agent spec). Get an instant risk report — no pip install.</p>
+    <textarea id="source" placeholder="# Agent Goals&#10;- Ship safely&#10;&#10;## Tools&#10;- `terminal` — run tests"></textarea>
+    <button id="analyze">Analyze</button>
+    <div id="result" class="card">
+        <div class="grade" id="grade">-</div>
+        <div>
+            <span class="metric">Agent: <strong id="agent">-</strong></span>
+            <span class="metric">IDS: <strong id="ids">-</strong></span>
+            <span class="metric">Coverage: <strong id="coverage">-</strong></span>
+        </div>
+        <ul class="risks" id="risks"></ul>
+        <p style="margin-top:1rem;color:#64748b;font-size:0.875rem;">
+            Install for CI enforcement: <code>pip install intentspec</code> ·
+            <a href="/">Dashboard</a>
+        </p>
+    </div>
+    <p class="error" id="error" style="display:none;"></p>
+    <script>
+        document.getElementById('analyze').addEventListener('click', async () => {
+            const text = document.getElementById('source').value.trim();
+            const err = document.getElementById('error');
+            const result = document.getElementById('result');
+            err.style.display = 'none';
+            if (!text) { err.textContent = 'Paste an agent spec first.'; err.style.display = 'block'; return; }
+            const res = await fetch('/api/demo/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text }),
+            });
+            const data = await res.json();
+            if (!res.ok) { err.textContent = data.detail || 'Analysis failed'; err.style.display = 'block'; return; }
+            document.getElementById('grade').textContent = data.grade;
+            document.getElementById('agent').textContent = data.agent_name;
+            document.getElementById('ids').textContent = '~' + data.ids_score + '/100';
+            document.getElementById('coverage').textContent = Math.round(data.coverage_overall * 100) + '%';
+            const risks = document.getElementById('risks');
+            risks.innerHTML = '';
+            (data.risks || []).forEach(r => { const li = document.createElement('li'); li.textContent = r; risks.appendChild(li); });
+            result.style.display = 'block';
+        });
+    </script>
+</body>
+</html>"""
+
+
 def create_app(path: str = "."):
     """Create FastAPI app for the dashboard."""
     try:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, HTTPException
         from fastapi.responses import HTMLResponse, JSONResponse
+        from pydantic import BaseModel
     except ImportError:
         raise ImportError(
             "FastAPI is required for the dashboard. "
@@ -210,9 +337,28 @@ def create_app(path: str = "."):
 
     app = FastAPI(title="IntentSpec Dashboard")
 
+    class DemoAnalyzeRequest(BaseModel):
+        text: str
+
     @app.get("/", response_class=HTMLResponse)
     async def index():
         return render_dashboard(path)
+
+    @app.get("/demo", response_class=HTMLResponse)
+    async def demo():
+        return render_demo_page()
+
+    @app.post("/api/demo/analyze")
+    async def demo_analyze(body: DemoAnalyzeRequest):
+        text = body.text.strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="text is required")
+        if len(text) > 200_000:
+            raise HTTPException(status_code=400, detail="text too large (max 200KB)")
+        try:
+            return JSONResponse(analyze_agents_md_text(text))
+        except Exception as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @app.get("/api/health")
     async def api_health():

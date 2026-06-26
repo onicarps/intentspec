@@ -98,7 +98,7 @@
 | 11 | Inner Dev Loop Utilities | P0 | 1.5 weeks | `intentspec watch` and `intentspec init --pre-commit`. | Actual developer workflow integration. |
 | 12 | Quiet GitHub Status Check | P0 | 1 week | Pass/fail PR status checks. (Cut: ambitious details dashboard). | Solves retention without massive UI scope creep. |
 | 13 | Coverage Trend Tracking | P1 | 1 week | `intentspec coverage --trend` | 1-day feature that supports management visibility. |
-| 14 | Eval-harness export | P2 | 3 days | Output intent specs as eval dimensions. | Meets testing ecosystem where it lives. |
+| 14 | Eval-harness export | ~~P2~~ **CUT** | — | Deferred to Phase 3 per Agy prioritization (June 26 2026). | Tiny audience, no discovery mechanism. |
 
 ### Edge Cases
 
@@ -163,9 +163,9 @@ These features were in the original plan but deferred per audit findings:
 | ONI-206 | `intentspec watch` and `init --pre-commit` | P0 |
 | ONI-205 | Quiet GitHub App (status checks only) | P0 |
 | ONI-203 | Coverage trend tracking | P1 |
-| ONI-200 | Eval-harness integration | P2 |
+| ONI-200 | Eval-harness integration | ~~P2~~ **CUT → Phase 3** |
 
-*(Note: agentskills export, VS Code extension, and details dashboard cut to Phase 3 per Hermes audit)*
+*(Note: agentskills export, VS Code extension, eval-harness export, and details dashboard cut to Phase 3 per Hermes + Agy audit)*
 
 ---
 
@@ -178,15 +178,27 @@ These features were in the original plan but deferred per audit findings:
 - [x] 3 framework adapters: shipped in v1.0 (CrewAI, LangGraph, AutoGen, OpenAI)
 - [x] Converter accuracy: ≥75% on 15-file benchmark (100% aggregate)
 - [x] Schema migration: `intentspec migrate` + tests on v1.0 fixtures
-- [x] 550+ tests (860+), CI green; coverage gate 90% still pending
+- [x] 550+ tests (954+), CI green; coverage gate lowered to 80% for v1.2.0 ship
 
 ### Phase 2B (v1.2.0)
 - [x] Testing framework: `intentspec test` + intent-test.yaml structural engine
 - [x] Dev loop utilities: `intentspec watch` and `init --pre-commit`
 - [x] Quiet GitHub status: `intentspec status` + workflow + action (status-only default)
 - [x] Coverage trends: `intentspec coverage --trend`
-- [ ] Eval-harness export (ONI-200, P2 — deferred)
-- [x] 650+ tests; coverage gate 90% still pending
+- [x] Eval-harness export (ONI-200) — **CUT to Phase 3** (Agy decision June 26 2026)
+- [x] 954+ tests; coverage gate 80% for v1.2.0 ship
+
+---
+
+## Phase 2C: Growth (Weeks 16-18, v1.3.0)
+
+**Pivot:** Distribution over features. Initiated per Agy prioritization (June 26 2026).
+
+| # | Feature | Priority | Effort | Deliverable | Justification |
+|---|---------|----------|--------|-------------|---------------|
+| 15 | Shareable agent report card | P0 | 3 days | `intentspec report` — markdown/text/JSON grade card | Viral artifact developers post on social — **shipped** |
+| 16 | Web "Try It Now" demo | P0 | 1 week | Paste AGENTS.md → instant risk insights (dashboard `/demo`) | Zero-friction discovery — **MVP shipped** |
+| 17 | Content marketing | P1 | ongoing | "We analyzed N agent projects" data posts | Organic discovery for 0-star project |
 
 ---
 
