@@ -16,7 +16,7 @@ from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, ru
 from intentspec.drift import run_drift
 from intentspec.enforce import enforce_mcp, run_enforce
 from intentspec.health import run_health
-from intentspec.migrate import migrate as migrate_fn, Migrator
+from intentspec.migrate import migrate as migrate_fn
 
 try:
     from intentspec.dashboard import serve as _serve_dashboard
@@ -34,6 +34,8 @@ from intentspec.models.intent import IntentValidationError
 from intentspec.score.ids import compute_ids
 from intentspec.spec.formatter import Formatter
 from intentspec.spec.validate import validate_file, validate_schema, validate_semantic
+from intentspec.test_engine import run_intent_tests
+from intentspec.test_schema import IntentTestSchemaError, parse_intent_test
 
 
 @click.group()
@@ -883,6 +885,66 @@ def enforce(path: str, mcp_config: str | None, output_format: str):
             exit_code = 1
 
     sys.exit(exit_code)
+
+
+@main.command("test")
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def test(path: str, output_format: str):
+    """Run structural intent tests (intent-test.yaml) against intent.yaml.
+
+    PATH is the intent.yaml file or a directory containing it. Defaults to the
+    current directory. The sibling intent-test.yaml (if present) is executed.
+
+    Exit codes: 0 all pass (or no test file), 1 any error-severity failure,
+    2 warning-severity-only failure, 3 missing intent.yaml or a fatal test-file
+    schema error.
+    """
+    target = Path(path)
+    if target.is_dir():
+        intent_path = target / "intent.yaml"
+    else:
+        intent_path = target
+
+    if not intent_path.is_file():
+        click.echo(f"Error: no intent.yaml found at {target}", err=True)
+        sys.exit(3)
+
+    test_path = intent_path.parent / "intent-test.yaml"
+    if not test_path.is_file():
+        click.echo(f"No intent-test.yaml found next to {intent_path}; nothing to test.")
+        sys.exit(0)
+
+    try:
+        intent, _schema_errors, _semantic_warnings = validate_file(intent_path)
+    except IntentValidationError as e:
+        for err in e.errors:
+            click.echo(f"Error: {intent_path}: {err}", err=True)
+        sys.exit(3)
+
+    try:
+        intent_test = parse_intent_test(test_path)
+    except IntentTestSchemaError as e:
+        click.echo(f"Error: invalid intent-test.yaml ({test_path}):", err=True)
+        for err in e.errors:
+            click.echo(f"  - {err}", err=True)
+        sys.exit(3)
+
+    suite = run_intent_tests(intent, intent_test)
+
+    if output_format == "json":
+        click.echo(json.dumps(suite.to_dict(), indent=2))
+    elif output_format == "yaml":
+        click.echo(yaml.dump(suite.to_dict(), default_flow_style=False, sort_keys=False))
+    else:
+        click.echo(f"\n{intent_path}")
+        click.echo(suite.to_text())
+
+    if suite.failed > 0 or suite.errors > 0:
+        sys.exit(1)
+    if suite.warnings > 0:
+        sys.exit(2)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
