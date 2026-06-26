@@ -1,0 +1,13 @@
+name: "mock-agent-test"
+description: "Test constraints of the mock agent"
+tests:
+  - name: "has-escalation"
+    type: "presence_check"
+    field: "escalation"
+  - name: "has-goals"
+    type: "count_check"
+    assert: "len(goals) > 0"
+  - name: "agent-name-format"
+    type: "regex_check"
+    field: "agent.name"
+    assert: "^mock-[a-z]+$"

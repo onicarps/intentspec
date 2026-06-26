@@ -6,14 +6,14 @@
 
 **Read `STATUS.md` in this directory first.**
 
-| Phase | Version | Status |
+| Phase | Package | Status |
 |-------|---------|--------|
-| 2A Core moat | v1.1.0 | ✅ COMPLETE |
-| 2B Inner dev loop | v1.2.0 | ✅ COMPLETE — `test`, `watch`, `status`, `coverage --trend` |
-| 2C Growth | v1.3.1 | ✅ COMPLETE — `report`, `/demo`, `analyze`, `gate`, QA fixes |
+| 2A Core moat | 0.3.0 | ✅ COMPLETE |
+| 2B Inner dev loop | 0.3.0 | ✅ COMPLETE — `test`, `watch`, `status`, `coverage --trend` |
+| 2C Growth | 0.3.0 | ✅ COMPLETE — `report`, `/demo`, `analyze`, `gate`, QA fixes |
 | 3 Publish + integrate | — | 🔜 **NEXT** — beta program, TestPyPI gate, deferred cuts |
 
-PyPI: `intentspec==1.3.1` · Tests: 977 passing · Tag: `v1.3.1`
+PyPI: `intentspec==0.3.0` (pre-1.0) · Tests: 977 passing · Tag: `v0.3.0` · See `STATUS.md`
 
 ---
 

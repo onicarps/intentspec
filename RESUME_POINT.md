@@ -1,36 +1,24 @@
 # IntentSpec Resume Point — June 26 2026
 
-## State: Phase 2A + 2B + 2C COMPLETE — Phase 3 NEXT
+## State: Phase 2 complete — package **0.3.0** — Phase 3 NEXT
 
 **Canonical status:** `STATUS.md`
 
 ### Release
-- **PyPI:** `intentspec==1.3.1` (tag `v1.3.1`, published via GitHub Actions)
+- **PyPI:** `intentspec==0.3.0` (pre-1.0; 1.0.0 reserved for launch)
 - **Tests:** 977 passing, 1 skipped
 - **Repo:** github.com/onicarps/intentspec, `main` up to date
 
-### Phase 2B (v1.2.0) — COMPLETE
-- `intentspec test` — structural testing (ONI-202)
-- `intentspec watch` + `init --pre-commit` (ONI-206)
-- `intentspec status` + `.github/workflows/intentspec.yml` (ONI-205)
-- `intentspec coverage --trend` (ONI-203)
-- ONI-200 eval-harness — **CUT → Phase 3**
+### Shipped in 0.3.0 (Phases 2A + 2B + 2C)
+- 2A: migrate, lint v2, MCP enforce, adapters
+- 2B: test, watch, pre-commit, status, coverage --trend
+- 2C: report, demo, analyze, gate + QA/packaging fixes
 
-### Phase 2C (v1.3.0 → v1.3.1) — COMPLETE
-- `intentspec report`, dashboard `/demo`, `intentspec analyze`, `intentspec gate`
-- v1.3.1 QA fixes: templates packaging, gate MCP data, parseable `--format`, exit code 3 on missing paths, coverage N/A
-- QA: `INTENTSPEC_V130_RETEST_REPORT.md` — PASS 4/4
-
-### To resume work
+### To resume
 ```bash
-cd ~/.hermes/profiles/intentspec/workspace/
-pip install --upgrade intentspec   # or: pip install -e ".[dev]" --break-system-packages
-intentspec --version               # expect 1.3.1
-python3 -m pytest tests/ -q      # expect 977 passed
+pip install --upgrade intentspec
+intentspec --version   # 0.3.0
 ```
 
-### Phase 3 next (do not re-open 2B/2C)
-1. Beta program — recruit 5–10 users on real repos
-2. TestPyPI gate before PyPI releases
-3. Deferred: ONI-200 eval export, ONI-187 EU AI Act pack, `badge`, agentskills export
-4. Growth: real-repo `analyze`, content distribution
+### Phase 3 next
+Beta program, TestPyPI gate, deferred cuts (ONI-200, EU AI Act, badge)

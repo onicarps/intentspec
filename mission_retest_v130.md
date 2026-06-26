@@ -1,4 +1,4 @@
-# Mission: IntentSpec v1.3.1 — Re-Test After QA Fixes
+# Mission: IntentSpec 0.3.0 — Re-Test After QA Fixes
 
 ## Your Task
 
@@ -9,18 +9,17 @@ Grok fixed bugs from the v1.3.0 independent test report. Run a targeted re-test 
 **Do not proceed if this gate fails.** The previous re-test failed because droids tested v1.3.0 while fixes only existed in workspace source.
 
 ```bash
-intentspec --version          # MUST show: intentspec, version 1.3.1
+intentspec --version          # MUST show: intentspec, version 0.3.0
 which intentspec              # expect: /home/oni/.local/bin/intentspec
 ls "$(python3 -c "import intentspec, pathlib; print(pathlib.Path(intentspec.__file__).parent / 'templates')")"
 # MUST list: coding-agent.yaml, data-pipeline.yaml, multi-agent-coordinator.yaml, research-agent.yaml, service-agent.yaml
 ```
 
-If version is not **1.3.1**, stop and report **BLOCKED — wrong install version**. Do not mark bugs as unfixed.
+If version is not **0.3.0**, stop and report **BLOCKED — wrong install version**. Do not mark bugs as unfixed.
 
-To install the local fix build (if needed):
+To install the local build (if needed):
 ```bash
-cd /home/oni/.hermes/profiles/intentspec/workspace
-pip install --user --break-system-packages dist/intentspec-1.3.1-py3-none-any.whl
+pip install --upgrade intentspec
 ```
 
 ## Previously Found Bugs to Re-Test

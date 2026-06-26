@@ -256,4 +256,4 @@ The PDD defines 11 kill criteria. These are evaluated monthly during Phase 2:
 
 ---
 
-*Plan created June 23 2026. Phase 2A + 2B + 2C COMPLETE (June 26 2026). PyPI v1.3.1. 977 tests passing. Next: Phase 3 (Publish + Integrate, Beta Program). Canonical status: `workspace/STATUS.md`.*
+*Plan created June 23 2026. Phase 2A + 2B + 2C COMPLETE (June 26 2026). PyPI **0.3.0** (pre-1.0; 1.0.0 reserved for launch). 977 tests passing. Next: Phase 3. Canonical status: `workspace/STATUS.md`.*

@@ -1,0 +1,12 @@
+version: "1.0"
+agent:
+  name: "mock-agent"
+  type: "testing"
+  description: "A mock agent for testing constraints"
+intent:
+  goals:
+    - description: "Validate constraints correctly"
+      priority: "high"
+  escalation:
+    trigger: "validation fails"
+    method: "report to human"

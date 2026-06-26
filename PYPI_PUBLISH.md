@@ -1,31 +1,27 @@
-# PyPI Publish — Using GitHub OIDC (Trusted Publishing)
+# PyPI Publish — GitHub OIDC (Trusted Publishing)
 
-## Status: ACTIVE — v1.3.1 published June 26 2026
+## Status: ACTIVE — canonical pre-1.0 line is **0.3.x**
 
-## How It Works
-GitHub OIDC trusted publishing — no long-lived API token. Push a `v*` tag → workflow builds and publishes.
+## Versioning
+- **0.1.x** — early alpha
+- **0.3.0** — Phase 2 complete (current)
+- **1.0.0** — reserved for public launch after beta
+- Mistaken **1.2.0 / 1.3.0 / 1.3.1** publishes are **yanked**
 
-## What's Done
-- `.github/workflows/publish.yml` — triggers on tags `v*`
-- Published: **v1.2.0**, **v1.3.0**, **v1.3.1**
-- Current PyPI latest: **1.3.1**
-
-## To publish a new release
+## Publish a release
 ```bash
 cd ~/.hermes/profiles/intentspec/workspace
-# bump version in pyproject.toml, __init__.py, cli.py
+# version in pyproject.toml, __init__.py, cli.py
 python3 -m pytest tests/ -q
-git commit -am "chore: release vX.Y.Z"
-git tag vX.Y.Z
-git push origin main
-git push origin vX.Y.Z
+git commit -am "chore: release 0.3.x"
+git tag v0.3.x
+git push origin main && git push origin v0.3.x
 ```
 
-## After Publishing
+Workflow `.github/workflows/publish.yml` runs on `v*` tags.
+
+## After publishing
 ```bash
 pip install --upgrade intentspec
-intentspec --version   # expect latest
+intentspec --version
 ```
-
-## OIDC setup (one-time)
-https://pypi.org/manage/account/publishing/ — publisher for `onicarps/intentspec`, workflow `publish.yml`, environment `pypi`.

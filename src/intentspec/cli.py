@@ -46,7 +46,7 @@ from intentspec.watch import run_watch_cycle, watch_directory, watch_exit_code
 
 
 @click.group()
-@click.version_option(version="1.3.1", prog_name="intentspec")
+@click.version_option(version="0.3.0", prog_name="intentspec")
 def main():
     """IntentSpec — Coverage and enforcement layer for AI agent infrastructure.
 

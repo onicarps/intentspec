@@ -87,7 +87,7 @@ def sync_notion() -> None:
 
     updates: dict[int, str] = {
         15: "Phase 2A + 2B + 2C: COMPLETE ✅",
-        16: "PyPI: v1.3.1 | Tests: 977 passing | Tag: v1.3.1",
+        16: "PyPI: 0.3.0 (pre-1.0) | Tests: 977 passing | Tag: v0.3.0",
         26: "Phase 2A: ONI-184, ONI-185, ONI-194, ONI-186, ONI-187, ONI-191–193, ONI-208, ONI-195 — Done",
         27: "Phase 2B: ONI-206 (test), ONI-207 (trend), ONI-132 (pre-commit), ONI-130 (GH Action) — Done",
         28: "Cut to Phase 3: ONI-209 (eval-harness), ONI-188 (EU AI Act), ONI-190 (badge), ONI-211 (agentskills export)",
@@ -102,7 +102,7 @@ def sync_notion() -> None:
         "intentspec report (shareable grade card)",
         "Dashboard /demo (Try It Now)",
         "intentspec analyze + content marketing",
-        "intentspec gate (ONI-195) + v1.3.1 QA fixes",
+        "intentspec gate (ONI-195) + QA/packaging fixes",
     ]
     for i, text in updates.items():
         if i < len(blocks):
@@ -131,7 +131,7 @@ def sync_notion() -> None:
                             "object": "block",
                             "type": "heading_3",
                             "heading_3": {
-                                "rich_text": [{"type": "text", "text": {"content": "Phase 2C Shipped (v1.3.1)"}}]
+                                "rich_text": [{"type": "text", "text": {"content": "Phase 2C Shipped (0.3.0)"}}]
                             },
                         },
                         *[
@@ -236,7 +236,7 @@ def sync_linear() -> None:
 
     comment = (
         "Phase sync (June 26 2026): Phase 2A+2B+2C complete. "
-        "PyPI v1.3.1 published. 977 tests passing. "
+        "PyPI 0.3.0 published (pre-1.0). 977 tests passing. "
         "See github.com/onicarps/intentspec STATUS.md."
     )
     for ident in ["ONI-206", "ONI-195", "ONI-209"]:
