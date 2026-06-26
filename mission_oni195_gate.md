@@ -1,5 +1,9 @@
 # IntentSpec ONI-195 — Phase 2A Gate Validation Report + Content Marketing
 
+> **STATUS: SUPERSEDED (June 26 2026)** — Completed by Grok agent in commit `6549702`.
+> Droid mission `mis_01061753` was cancelled after hanging 6+ min mid-worker.
+> Do not re-run unless expanding blog to real-repo analysis.
+
 ## Context
 
 Gate validation module is **already implemented** at `src/intentspec/gate_validation.py` with CLI `intentspec gate`. Content analysis at `src/intentspec/analyze_specs.py` with CLI `intentspec analyze`.
