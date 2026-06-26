@@ -46,13 +46,19 @@ from intentspec.watch import run_watch_cycle, watch_directory, watch_exit_code
 
 
 @click.group()
-@click.version_option(version="1.3.0", prog_name="intentspec")
+@click.version_option(version="1.3.1", prog_name="intentspec")
 def main():
     """IntentSpec — Coverage and enforcement layer for AI agent infrastructure.
 
     Test coverage for agent behavior. Works with any spec format.
     """
     pass
+
+
+def _fatal_missing_path(target: Path) -> None:
+    """Exit 3 for missing path (documented fatal exit code)."""
+    click.echo(f"Path not found: {target}", err=True)
+    sys.exit(3)
 
 
 @main.command()
@@ -79,8 +85,7 @@ def validate(path: str, strict: bool, output_format: str):
             click.echo(fmt.warning(f"No intent.yaml found in {target}"))
             sys.exit(0)
     else:
-        click.echo(fmt.error(f"Path not found: {target}"))
-        sys.exit(1)
+        _fatal_missing_path(target)
 
     exit_code = 0
     for f in sorted(files):
@@ -148,8 +153,7 @@ def score(path: str, by_agent: bool, weights: str | None, output_format: str):
             click.echo("No intent.yaml found")
             sys.exit(0)
     else:
-        click.echo(f"Path not found: {target}", err=True)
-        sys.exit(1)
+        _fatal_missing_path(target)
 
     custom_weights = None
     if weights:
@@ -204,8 +208,7 @@ def coverage(path: str, trend: bool, output_format: str):
             click.echo("No intent.yaml found")
             sys.exit(0)
     else:
-        click.echo(f"Path not found: {target}", err=True)
-        sys.exit(1)
+        _fatal_missing_path(target)
 
     for f in sorted(files):
         try:
@@ -595,13 +598,13 @@ def diff(path: str, semantic: bool, from_commit: str | None, output_format: str)
             click.echo("No intent.yaml found")
             sys.exit(0)
     else:
-        click.echo(f"Path not found: {target}", err=True)
-        sys.exit(1)
+        _fatal_missing_path(target)
 
     for f in sorted(files):
         try:
             output = run_diff(str(f), source_commit=from_commit, semantic=semantic, fmt=output_format)
-            click.echo(f"\n{f}")
+            if output_format == "text":
+                click.echo(f"\n{f}")
             click.echo(output)
         except FileNotFoundError as e:
             click.echo(f"{f}: {e}", err=True)
@@ -766,7 +769,11 @@ def gate(path: str, output_format: str, output: str | None):
 
     PATH is the directory to scan. Defaults to current directory.
     """
-    report = run_gate_validation(path)
+    try:
+        report = run_gate_validation(path)
+    except Exception as exc:
+        click.echo(f"Error: gate validation failed: {exc}", err=True)
+        sys.exit(1)
 
     if output_format == "json":
         rendered = json.dumps(report.to_dict(), indent=2)
@@ -830,8 +837,7 @@ def lint(path: str, output_format: str):
             click.echo("No intent.yaml found")
             sys.exit(0)
     else:
-        click.echo(f"Path not found: {target}", err=True)
-        sys.exit(1)
+        _fatal_missing_path(target)
 
     exit_code = 0
     for f in sorted(files):
@@ -885,6 +891,8 @@ def health(path: str, stale_days: int, output_format: str):
     else:
         click.echo(result.to_text())
 
+    if result.errors and any("Path not found" in e for e in result.errors):
+        sys.exit(3)
     if result.errors or result.invalid > 0:
         sys.exit(1)
     if result.stale > 0 or result.orphaned > 0:
@@ -910,6 +918,8 @@ def drift(path: str, threshold_days: int, output_format: str):
     else:
         click.echo(result.to_text())
 
+    if result.errors:
+        sys.exit(3)
     sys.exit(1 if result.drifted else 0)
 
 
@@ -968,8 +978,13 @@ def migrate(path: str, output_format: str):
             if output_format == "json":
                 click.echo(json.dumps({"file": str(f), "migrated": migrated}, indent=2))
             elif output_format == "yaml":
-                click.echo(f"--- {f} ---")
-                click.echo(migrated)
+                click.echo(
+                    yaml.dump(
+                        {"file": str(f), "migrated": migrated},
+                        default_flow_style=False,
+                        sort_keys=False,
+                    )
+                )
             else:
                 click.echo(f"--- {f} ---")
                 click.echo(migrated)
@@ -1078,7 +1093,17 @@ def test(path: str, output_format: str):
 
     test_path = intent_path.parent / "intent-test.yaml"
     if not test_path.is_file():
-        click.echo(f"No intent-test.yaml found next to {intent_path}; nothing to test.")
+        payload = {
+            "status": "no_tests",
+            "intent": str(intent_path),
+            "message": "No intent-test.yaml found; nothing to test.",
+        }
+        if output_format == "json":
+            click.echo(json.dumps(payload, indent=2))
+        elif output_format == "yaml":
+            click.echo(yaml.dump(payload, default_flow_style=False, sort_keys=False))
+        else:
+            click.echo(payload["message"])
         sys.exit(0)
 
     try:

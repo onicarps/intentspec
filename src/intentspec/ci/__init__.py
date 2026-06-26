@@ -295,14 +295,17 @@ def _evaluate_file(
 
     score = compute_ids(intent).score
     source = resolve_source_for_intent(file_path)
-    coverage = round(
-        analyze_coverage(
-            intent,
-            source_path=str(source) if source else None,
-        ).overall
-        * 100
+    cov_result = analyze_coverage(
+        intent,
+        source_path=str(source) if source else None,
     )
-    coverage_below_threshold = min_coverage > 0 and coverage < min_coverage
+    if cov_result.has_source:
+        coverage = round(cov_result.overall * 100)
+    else:
+        coverage = None
+    coverage_below_threshold = (
+        min_coverage > 0 and coverage is not None and coverage < min_coverage
+    )
 
     test_failures, test_warnings, test_errors = _run_structural_tests(intent, file_path)
 

@@ -67,10 +67,10 @@ class TestCLIValidate:
         assert "No intent.yaml found" in result.output
 
     def test_validate_nonexistent_path(self):
-        """Validate nonexistent path returns exit 1."""
+        """Validate nonexistent path returns exit 3 (fatal)."""
         runner = CliRunner()
         result = runner.invoke(main, ["validate", "/nonexistent/path"])
-        assert result.exit_code == 1
+        assert result.exit_code == 3
 
 
 class TestCLIScore:

@@ -56,11 +56,11 @@ class SpecStats:
 
     def to_markdown(self) -> str:
         d = self.to_dict()
+        spec_word = "spec" if d["total"] == 1 else "specs"
         lines = [
-            "# Agent Spec Analysis — Content Marketing Data",
+            f"# Agent Spec Analysis — {d['label']}",
             "",
-            f"**Population:** {d['label']}",
-            f"**Sample size:** {d['total']} agent specs",
+            f"**Sample size:** {d['total']} agent {spec_word}",
             f"**Average IDS score:** ~{d['avg_ids']}/100",
             "",
             "## Key Findings",
@@ -72,7 +72,7 @@ class SpecStats:
             "",
             "## Headline Options",
             "",
-            f'> "We analyzed {d["total"]} agent specs. {d["pct_no_non_negotiables"]:.0f}% have no hard boundaries."',
+            f'> "We analyzed {d["total"]} agent {spec_word}. {d["pct_no_non_negotiables"]:.0f}% have no hard boundaries."',
             "",
             f'> "{d["pct_no_denied_tools"]:.0f}% of agent specs never declare which tools are forbidden."',
             "",

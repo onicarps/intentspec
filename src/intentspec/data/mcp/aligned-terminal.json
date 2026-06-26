@@ -1,0 +1,7 @@
+{
+  "servers": {
+    "terminal": {
+      "tools": ["run_command", "read_output"]
+    }
+  }
+}

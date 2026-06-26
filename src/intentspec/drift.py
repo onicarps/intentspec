@@ -42,6 +42,10 @@ class DriftResult:
                 lines.append(
                     f"  ⚠ {d['path']} — last commit {d['days_ago']:.0f} days ago"
                 )
+        if self.errors:
+            lines.append("")
+            for err in self.errors:
+                lines.append(f"  ✗ {err}")
         return "\n".join(lines)
 
 

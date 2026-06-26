@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "search": {
+      "tools": [
+        {"name": "web_search", "description": "Search the web"},
+        {"name": "fetch_url", "description": "Fetch URL content"}
+      ]
+    }
+  }
+}

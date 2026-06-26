@@ -48,11 +48,12 @@ def analyze_coverage(
 
     if not source_text:
         return {
-            "tool_coverage": 1.0 if not intent.tools_allowed else 0.0,
-            "goal_coverage": 1.0 if not intent.goals else 0.0,
-            "constraint_coverage": 1.0 if not intent.constraints else 0.0,
-            "non_negotiable_coverage": 1.0 if not intent.non_negotiables else 0.0,
-            "overall": 1.0,
+            "has_source": False,
+            "tool_coverage": None,
+            "goal_coverage": None,
+            "constraint_coverage": None,
+            "non_negotiable_coverage": None,
+            "overall": None,
             "missing_tools": [],
             "missing_goals": [],
         }

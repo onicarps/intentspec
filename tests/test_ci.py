@@ -25,8 +25,8 @@ FIXTURE_DIR = Path(__file__).parent / "fixtures"
 VALID = str(FIXTURE_DIR / "valid_intent.yaml")
 INVALID = str(FIXTURE_DIR / "invalid_intent.yaml")
 
-# valid_intent.yaml has no sibling source — coverage defaults to 100%.
-VALID_COVERAGE = 100
+# valid_intent.yaml has no sibling source — coverage is N/A (not compared).
+VALID_COVERAGE = None
 # Threshold above VALID_COVERAGE to trigger coverage_below_threshold failures.
 ABOVE_VALID_COVERAGE = 101
 
@@ -136,23 +136,34 @@ def test_run_ci_lint_error_returns_1(tmp_path: Path) -> None:
     assert result.exit_code == 1
 
 
-def test_run_ci_coverage_below_threshold_returns_3() -> None:
-    result = run_ci([VALID], min_coverage=ABOVE_VALID_COVERAGE)
+def test_run_ci_coverage_below_threshold_returns_3(tmp_path: Path) -> None:
+    spec = _write_low_coverage_spec(tmp_path)
+    result = run_ci([str(spec)], min_coverage=ABOVE_VALID_COVERAGE)
     f = result.files[0]
-    assert f.coverage == VALID_COVERAGE
+    assert f.coverage is not None
+    assert f.coverage < ABOVE_VALID_COVERAGE
     assert f.coverage_below_threshold is True
     assert f.exit_code == 3
     assert result.exit_code == 3
 
 
-def test_run_ci_coverage_at_threshold_is_not_below() -> None:
-    result = run_ci([VALID], min_coverage=VALID_COVERAGE)
+def test_run_ci_no_source_coverage_is_na() -> None:
+    result = run_ci([VALID], min_coverage=80)
+    f = result.files[0]
+    assert f.coverage is None
+    assert f.coverage_below_threshold is False
+
+
+def test_run_ci_coverage_at_threshold_is_not_below(tmp_path: Path) -> None:
+    spec = _write_low_coverage_spec(tmp_path)
+    result = run_ci([str(spec)], min_coverage=0)
     f = result.files[0]
     assert f.coverage_below_threshold is False
 
 
-def test_run_ci_coverage_scaling_is_percentage() -> None:
-    assert run_ci([VALID], min_coverage=VALID_COVERAGE + 15).exit_code == 3
+def test_run_ci_coverage_scaling_is_percentage(tmp_path: Path) -> None:
+    spec = _write_low_coverage_spec(tmp_path)
+    assert run_ci([str(spec)], min_coverage=101).exit_code == 3
 
 
 def test_run_ci_min_coverage_zero_is_noop() -> None:
@@ -180,8 +191,14 @@ def test_run_ci_empty_file_returns_3(tmp_path: Path) -> None:
     assert f.coverage is None
 
 
-def test_run_ci_fatal_beats_error_single_file() -> None:
-    result = run_ci([INVALID], min_coverage=ABOVE_VALID_COVERAGE)
+def test_run_ci_fatal_beats_error_single_file(tmp_path: Path) -> None:
+    spec_path = _write_low_coverage_spec(tmp_path)
+    content = spec_path.read_text(encoding="utf-8")
+    spec_path.write_text(
+        content.replace("type: custom", "type: invalid_type"),
+        encoding="utf-8",
+    )
+    result = run_ci([str(spec_path)], min_coverage=ABOVE_VALID_COVERAGE)
     f = result.files[0]
     assert f.schema_errors  # error tier present
     assert f.coverage_below_threshold is True
@@ -189,9 +206,10 @@ def test_run_ci_fatal_beats_error_single_file() -> None:
     assert result.exit_code == 3
 
 
-def test_run_ci_strict_does_not_change_clean_or_fatal() -> None:
+def test_run_ci_strict_does_not_change_clean_or_fatal(tmp_path: Path) -> None:
     assert run_ci([VALID], strict=True).exit_code == 1  # warnings promoted to errors
-    assert run_ci([VALID], min_coverage=ABOVE_VALID_COVERAGE, strict=True).exit_code == 3
+    spec = _write_low_coverage_spec(tmp_path)
+    assert run_ci([str(spec)], min_coverage=ABOVE_VALID_COVERAGE, strict=True).exit_code == 3
     assert run_ci([str(FIXTURE_DIR / "nope.yaml")], strict=True).exit_code == 3
 
 
@@ -279,9 +297,8 @@ def test_to_json_parseable_and_field_semantics() -> None:
     assert parsed["min_coverage"] == 25
     assert len(parsed["files"]) == 2
     ok_file = parsed["files"][0]
-    assert isinstance(ok_file["coverage"], int)
-    assert 0 <= ok_file["coverage"] <= 100
-    assert isinstance(ok_file["coverage_below_threshold"], bool)
+    assert ok_file["coverage"] is None  # no sibling source to compare
+    assert ok_file["coverage_below_threshold"] is False
     assert ok_file["error"] in (None, "")
     missing_file = parsed["files"][1]
     assert missing_file["score"] is None

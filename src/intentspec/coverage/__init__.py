@@ -28,8 +28,15 @@ class CoverageResult:
     declared_tools: int = 0
     mentioned_goals: int = 0
     declared_goals: int = 0
+    has_source: bool = True
 
     def to_text(self) -> str:
+        if not self.has_source:
+            return (
+                "Overall Coverage: N/A (no source spec found to compare against)\n"
+                f"  Declared tools: {self.declared_tools}\n"
+                f"  Declared goals: {self.declared_goals}"
+            )
         lines = [
             f"Overall Coverage: {self.overall:.0%} (estimate)",
             f"  Tool coverage: {self.tool_coverage:.0%} ({self.declared_tools}/{self.mentioned_tools} tools)",
@@ -45,7 +52,8 @@ class CoverageResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "overall": round(self.overall, 4),
+            "has_source": self.has_source,
+            "overall": round(self.overall, 4) if self.has_source else None,
             "tool_coverage": round(self.tool_coverage, 4),
             "goal_coverage": round(self.goal_coverage, 4),
             "constraint_coverage": round(self.constraint_coverage, 4),
@@ -85,12 +93,10 @@ def analyze_coverage(
     result = CoverageResult()
 
     if not source_text:
-        # No source to compare against — assume full coverage
-        result.tool_coverage = 1.0
-        result.goal_coverage = 1.0
-        result.constraint_coverage = 1.0
-        result.non_negotiable_coverage = 1.0
-        result.overall = 1.0
+        result.has_source = False
+        result.declared_tools = len(intent.tools_allowed)
+        result.declared_goals = len(intent.goals)
+        result.overall = 0.0
         return result
 
     # Extract mentioned tools from source (backtick mentions)

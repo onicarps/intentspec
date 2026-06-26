@@ -138,18 +138,18 @@ class TestAnalyzeCoverage:
     """Test the CoverageResult-returning analyze_coverage."""
 
     def test_no_source_text_no_path(self):
-        """No source provided — should return full coverage."""
+        """No source provided — should return N/A, not vacuous 100%."""
         intent = _make_intent()
         result = analyze_coverage(intent)
-        assert result.overall == 1.0
-        assert result.tool_coverage == 1.0
-        assert result.goal_coverage == 1.0
+        assert result.has_source is False
+        assert result.overall == 0.0
+        assert "N/A" in result.to_text()
 
     def test_empty_source_text(self):
-        """Empty source text — should return full coverage."""
+        """Empty source text — should return N/A."""
         intent = _make_intent()
         result = analyze_coverage(intent, source_text="")
-        assert result.overall == 1.0
+        assert result.has_source is False
 
     def test_source_with_tools_mentioned_and_declared(self):
         """Tools mentioned in source and declared in intent."""
@@ -227,27 +227,27 @@ class TestAnalyzeCoverage:
         intent = _make_intent(
             constraints=[Constraint(rule="Always do X", enforceable=True)]
         )
-        result = analyze_coverage(intent)
+        result = analyze_coverage(intent, source_text="# Overview\nAgent description.")
         assert result.constraint_coverage == 1.0
 
     def test_constraint_coverage_without_constraints(self):
-        """No constraints means perfect coverage (nothing to cover)."""
+        """No constraints — partial credit when source is present."""
         intent = _make_intent()
-        result = analyze_coverage(intent)
-        assert result.constraint_coverage == 1.0
+        result = analyze_coverage(intent, source_text="# Overview\nAgent description.")
+        assert result.constraint_coverage == 0.5
 
     def test_non_negotiable_coverage_with(self):
         intent = _make_intent(
             non_negotiables=[NonNegotiable(rule="Never do X", severity="hard")]
         )
-        result = analyze_coverage(intent)
+        result = analyze_coverage(intent, source_text="# Overview\nAgent description.")
         assert result.non_negotiable_coverage == 1.0
 
     def test_non_negotiable_coverage_without(self):
-        """No non-negotiables means perfect coverage (nothing to cover)."""
+        """No non-negotiables — partial credit when source is present."""
         intent = _make_intent()
-        result = analyze_coverage(intent)
-        assert result.non_negotiable_coverage == 1.0
+        result = analyze_coverage(intent, source_text="# Overview\nAgent description.")
+        assert result.non_negotiable_coverage == 0.5
 
     def test_overall_weighted_average(self):
         """Overall should be weighted average of components."""
@@ -284,14 +284,14 @@ class TestAnalyzeCoverage:
         """Source path that doesn't exist — treated as no source."""
         intent = _make_intent()
         result = analyze_coverage(intent, source_path="/nonexistent/path.md")
-        assert result.overall == 1.0
+        assert result.has_source is False
 
     def test_source_path_os_error(self):
         """Source path that causes OSError — treated as no source."""
         intent = _make_intent()
         # A directory path will cause OSError on read_text with utf-8-sig
         result = analyze_coverage(intent, source_path="/tmp")
-        assert result.overall == 1.0
+        assert result.has_source is False
 
     def test_purpose_section_goals(self):
         """Goals extracted from Purpose section."""
@@ -393,13 +393,14 @@ class TestAnalyzerCoverage:
     def test_no_source_text_no_path(self):
         intent = _make_intent()
         result = analyze_coverage_dict(intent)
-        assert result["overall"] == 1.0
-        assert result["tool_coverage"] == 1.0
+        assert result["has_source"] is False
+        assert result["overall"] is None
 
     def test_empty_source_text(self):
         intent = _make_intent()
         result = analyze_coverage_dict(intent, source_text="")
-        assert result["overall"] == 1.0
+        assert result["has_source"] is False
+        assert result["overall"] is None
 
     def test_source_with_tools(self):
         source = "Use `git` and `docker`."
@@ -468,7 +469,8 @@ class TestAnalyzerCoverage:
     def test_source_path_not_found(self):
         intent = _make_intent()
         result = analyze_coverage_dict(intent, source_path="/nonexistent/path.md")
-        assert result["overall"] == 1.0
+        assert result["has_source"] is False
+        assert result["overall"] is None
 
     def test_mentioned_tools_with_no_declared(self):
         """Tools mentioned but none declared — coverage 0."""
@@ -492,31 +494,34 @@ class TestAnalyzerCoverage:
         assert result["goal_coverage"] == 1.0
 
     def test_constraint_coverage_with(self):
-        """With constraints but no source, coverage is 0 (can't verify from source)."""
+        """With constraints but no source, coverage is N/A."""
         intent = _make_intent(
             constraints=[Constraint(rule="Always do X", enforceable=True)]
         )
         result = analyze_coverage_dict(intent)
-        # No source text means constraints can't be verified → 0.0
-        assert result["constraint_coverage"] == 0.0
+        assert result["has_source"] is False
+        assert result["constraint_coverage"] is None
 
     def test_constraint_coverage_without(self):
         intent = _make_intent()
         result = analyze_coverage_dict(intent)
-        assert result["constraint_coverage"] == 1.0  # No constraints = 1.0
+        assert result["has_source"] is False
+        assert result["constraint_coverage"] is None
 
     def test_non_negotiable_coverage_with(self):
-        """With non-negotiables but no source, coverage is 0."""
+        """With non-negotiables but no source, coverage is N/A."""
         intent = _make_intent(
             non_negotiables=[NonNegotiable(rule="Never do X", severity="hard")]
         )
         result = analyze_coverage_dict(intent)
-        assert result["non_negotiable_coverage"] == 0.0
+        assert result["has_source"] is False
+        assert result["non_negotiable_coverage"] is None
 
     def test_non_negotiable_coverage_without(self):
         intent = _make_intent()
         result = analyze_coverage_dict(intent)
-        assert result["non_negotiable_coverage"] == 1.0  # No non-negotiables = 1.0
+        assert result["has_source"] is False
+        assert result["non_negotiable_coverage"] is None
 
     def test_overall_weighted_average(self):
         source = "Use `git` for everything."

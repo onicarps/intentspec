@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "filesystem": {
+      "tools": [
+        {"name": "read_file", "description": "Read a file"},
+        {"name": "write_file", "description": "Write a file"}
+      ]
+    }
+  }
+}

@@ -22,14 +22,33 @@ from intentspec.models.intent import IntentValidationError
 from intentspec.spec.validate import validate_file
 
 
-_MCP_FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "sample_mcp"
-_BENCHMARK_FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-_ADAPTER_DIRS = {
-    "crewai": _BENCHMARK_FIXTURES / "sample_crewai",
-    "langgraph": _BENCHMARK_FIXTURES / "sample_langgraph",
-    "autogen": _BENCHMARK_FIXTURES / "sample_autogen",
-    "openai_agents": _BENCHMARK_FIXTURES / "sample_openai_agents",
-}
+_PKG_ROOT = Path(__file__).resolve().parent
+
+
+def _resolve_data_dir(name: str) -> Path | None:
+    """Resolve packaged data or dev-tree test fixtures."""
+    for candidate in (
+        _PKG_ROOT / "data" / name,
+        _PKG_ROOT.parents[1] / "tests" / "fixtures" / name,
+    ):
+        if candidate.exists():
+            return candidate
+    return None
+
+
+_MCP_FIXTURES = _resolve_data_dir("mcp")
+_BENCHMARK_FIXTURES = _PKG_ROOT.parents[1] / "tests" / "fixtures"
+if not _BENCHMARK_FIXTURES.exists():
+    _BENCHMARK_FIXTURES = None  # type: ignore[assignment]
+def _adapter_dirs() -> dict[str, Path]:
+    if _BENCHMARK_FIXTURES is None:
+        return {}
+    return {
+        "crewai": _BENCHMARK_FIXTURES / "sample_crewai",
+        "langgraph": _BENCHMARK_FIXTURES / "sample_langgraph",
+        "autogen": _BENCHMARK_FIXTURES / "sample_autogen",
+        "openai_agents": _BENCHMARK_FIXTURES / "sample_openai_agents",
+    }
 _FIELD_WEIGHTS = {
     "tools.allowed": 0.30,
     "non_negotiables": 0.20,
@@ -72,7 +91,11 @@ class GateReport:
 
     @property
     def automatable_pass(self) -> bool:
-        return all(c.status == "pass" for c in self.checks if c.status != "pending")
+        return all(
+            c.status in {"pass", "skip"}
+            for c in self.checks
+            if c.status not in {"pending"}
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -90,7 +113,7 @@ class GateReport:
             "|-----------|-----------|----------|--------|",
         ]
         for check in self.checks:
-            icon = {"pass": "✅", "fail": "❌", "pending": "⏳", "skip": "➖"}.get(check.status, "?")
+            icon = {"pass": "✅", "fail": "❌", "pending": "⏳", "skip": "⏭️"}.get(check.status, "?")
             lines.append(
                 f"| {check.name} | {check.threshold} | {check.measured} | {icon} {check.status} |"
             )
@@ -140,6 +163,8 @@ def _f1_score(expected: set[str], actual: set[str]) -> float:
 
 
 def _find_converter_pairs() -> list[tuple[Path, Path]]:
+    if _BENCHMARK_FIXTURES is None:
+        return []
     pairs: list[tuple[Path, Path]] = []
     for fixture_dir in ["sample_agents_md", "sample_skills_md", "sample_agentskills"]:
         base = _BENCHMARK_FIXTURES / fixture_dir
@@ -160,8 +185,24 @@ def _find_converter_pairs() -> list[tuple[Path, Path]]:
 
 def check_mcp_fp_rate() -> GateCheck:
     """MCP enforcement false-positive rate on fixture scenarios."""
+    if _MCP_FIXTURES is None:
+        return GateCheck(
+            name="MCP enforcement FP rate",
+            threshold=f"<{_MCP_FP_THRESHOLD:.0%}",
+            status="fail",
+            measured="MCP gate data not found in package",
+            details=["Expected packaged data at intentspec/data/mcp/"],
+        )
     scenarios_path = _MCP_FIXTURES / "scenarios.yaml"
-    raw = yaml.safe_load(scenarios_path.read_text(encoding="utf-8"))
+    try:
+        raw = yaml.safe_load(scenarios_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        return GateCheck(
+            name="MCP enforcement FP rate",
+            threshold=f"<{_MCP_FP_THRESHOLD:.0%}",
+            status="fail",
+            measured=f"cannot read scenarios: {exc}",
+        )
     scenarios = raw.get("scenarios", [])
 
     false_positives = 0
@@ -243,8 +284,9 @@ def check_converter_accuracy() -> GateCheck:
         return GateCheck(
             name="Converter accuracy",
             threshold=f"≥{_CONVERTER_THRESHOLD:.0%}",
-            status="fail",
-            measured="no fixtures",
+            status="skip",
+            measured="benchmark fixtures unavailable (dev/CI only)",
+            details=["Run from source tree or CI with tests/fixtures present"],
         )
 
     per_file: dict[str, float] = {}
@@ -325,13 +367,22 @@ def check_adapter_accuracy() -> GateCheck:
     scores: list[float] = []
     details: list[str] = []
 
+    adapter_dirs = _adapter_dirs()
+    if not adapter_dirs:
+        return GateCheck(
+            name="Framework adapter accuracy",
+            threshold=f"≥{_ADAPTER_THRESHOLD:.0%}",
+            status="skip",
+            measured="adapter fixtures unavailable (dev/CI only)",
+        )
+
     for adapter, import_path in parsers.items():
         module_path, func_name = import_path.split(":")
         import importlib
 
         mod = importlib.import_module(module_path)
         parse_fn = getattr(mod, func_name)
-        fixture_dir = _ADAPTER_DIRS[adapter]
+        fixture_dir = adapter_dirs[adapter]
         configs = sorted(fixture_dir.glob("*.yaml"))[:3]
         adapter_scores: list[float] = []
 
