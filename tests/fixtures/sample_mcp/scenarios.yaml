@@ -1,0 +1,32 @@
+# MCP enforcement gate scenarios for ONI-195 FP validation.
+# expect_risk: false = aligned spec (true negative); true = should flag (true positive)
+scenarios:
+  - name: aligned-filesystem
+    config: aligned-filesystem.json
+    allowed: [read_file, write_file]
+    denied: []
+    expect_risk: false
+
+  - name: aligned-terminal
+    config: aligned-terminal.json
+    allowed: [run_command, read_output]
+    denied: []
+    expect_risk: false
+
+  - name: aligned-search
+    config: aligned-search.json
+    allowed: [web_search, fetch_url]
+    denied: []
+    expect_risk: false
+
+  - name: gap-extra-tools
+    config: gap-extra-tools.json
+    allowed: [read_file, write_file]
+    denied: []
+    expect_risk: true
+
+  - name: denied-on-server
+    config: denied-on-server.json
+    allowed: [read_file]
+    denied: [drop_database]
+    expect_risk: true

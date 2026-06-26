@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "risky": {
+      "tools": [
+        {"name": "read_file"},
+        {"name": "drop_database"}
+      ]
+    }
+  }
+}

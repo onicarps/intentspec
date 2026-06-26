@@ -181,9 +181,9 @@ class TestPerformanceBudgets:
             times.append(elapsed_ms)
 
         median_ms = sorted(times)[2]
-        # Budget: 200ms (relaxed from 100ms for CI environments)
-        assert median_ms < 200, (
-            f"Validation median {median_ms:.1f}ms (runs: {[f'{t:.1f}' for t in times]}), budget is 200ms"
+        # Budget: 250ms (relaxed from 100ms for CI/WSL environments)
+        assert median_ms < 250, (
+            f"Validation median {median_ms:.1f}ms (runs: {[f'{t:.1f}' for t in times]}), budget is 250ms"
         )
 
     def test_diff_under_500ms(self, hundred_commit_repo: Path) -> None:

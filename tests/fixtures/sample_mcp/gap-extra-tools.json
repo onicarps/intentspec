@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "overprivileged": {
+      "tools": [
+        {"name": "read_file"},
+        {"name": "write_file"},
+        {"name": "delete_file"},
+        {"name": "execute_shell"}
+      ]
+    }
+  }
+}

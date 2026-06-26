@@ -13,6 +13,8 @@ from click.core import ParameterSource
 
 from intentspec.audit import generate_audit
 from intentspec.report_card import generate_report_card
+from intentspec.gate_validation import run_gate_validation
+from intentspec.analyze_specs import analyze_directory, analyze_directory_report
 from intentspec.ci import CiConfigError, load_ci_config, resolve_ci_settings, run_ci
 from intentspec.drift import run_drift
 from intentspec.enforce import enforce_mcp, run_enforce
@@ -44,7 +46,7 @@ from intentspec.watch import run_watch_cycle, watch_directory, watch_exit_code
 
 
 @click.group()
-@click.version_option(version="1.2.0", prog_name="intentspec")
+@click.version_option(version="1.3.0", prog_name="intentspec")
 def main():
     """IntentSpec — Coverage and enforcement layer for AI agent infrastructure.
 
@@ -752,6 +754,61 @@ def report(path: str, output_format: str, output: str | None):
         sys.exit(1)
     if result.lint_warnings > 0 or result.grade in {"D", "F"}:
         sys.exit(2)
+    sys.exit(0)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml", "markdown"]), default="text")
+@click.option("-o", "--output", type=click.Path(), help="Write report to file")
+def gate(path: str, output_format: str, output: str | None):
+    """Run Phase 2A gate validation checks (ONI-195).
+
+    PATH is the directory to scan. Defaults to current directory.
+    """
+    report = run_gate_validation(path)
+
+    if output_format == "json":
+        rendered = json.dumps(report.to_dict(), indent=2)
+    elif output_format == "yaml":
+        rendered = yaml.dump(report.to_dict(), default_flow_style=False)
+    elif output_format in {"markdown", "text"}:
+        rendered = report.to_markdown()
+    else:
+        rendered = report.to_markdown()
+
+    if output:
+        Path(output).write_text(rendered, encoding="utf-8")
+        click.echo(f"Gate report written to {output}")
+    else:
+        click.echo(rendered)
+
+    sys.exit(0 if report.automatable_pass else 1)
+
+
+@main.command("analyze")
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "markdown"]), default="text")
+@click.option("-o", "--output", type=click.Path(), help="Write analysis to file")
+def analyze_specs(path: str, output_format: str, output: str | None):
+    """Analyze agent specs for content marketing statistics.
+
+    PATH is the directory to scan. Defaults to current directory.
+    """
+    if output_format == "json":
+        stats = analyze_directory(path)
+        rendered = json.dumps(stats.to_dict(), indent=2)
+    elif output_format == "markdown":
+        rendered = analyze_directory_report(path)
+    else:
+        rendered = analyze_directory_report(path)
+
+    if output:
+        Path(output).write_text(rendered, encoding="utf-8")
+        click.echo(f"Analysis written to {output}")
+    else:
+        click.echo(rendered)
+
     sys.exit(0)
 
 
