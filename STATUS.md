@@ -12,7 +12,7 @@ IntentSpec is **pre-1.0**. Package version follows **0.x** semver, not phase num
 | **`0.3.0`** | **Current** — Phase 2A + 2B + 2C complete (all QA fixes included) |
 | `1.0.0` | Reserved for public launch after beta program |
 
-> **Note:** Tags `v1.2.0` / `v1.3.0` / `v1.3.1` were mistaken phase-aligned publishes (June 26). They are yanked on PyPI. Canonical line is **0.3.x**.
+> **Note:** Tags `v1.2.0` / `v1.3.0` / `v1.3.1` were mistaken phase-aligned publishes (June 26). **Yank them on PyPI** so `pip install` resolves to 0.3.0 — see `docs/YANK_1x_RELEASES.md`. Until then: `pip install 'intentspec>=0.3,<1'`.
 
 ## Current release
 

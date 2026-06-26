@@ -55,7 +55,7 @@ IntentSpec now resolves original agent source files (AGENTS.md, SKILL.md, framew
 ## Installation
 
 ```bash
-pip install intentspec   # 0.3.0
+pip install 'intentspec>=0.3,<1'   # 0.3.0 (pre-1.0)
 ```
 
 Requires Python 3.11+.
