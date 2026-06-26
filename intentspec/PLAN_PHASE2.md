@@ -180,9 +180,17 @@ These features were in the original plan but deferred per audit findings:
 - [x] Schema migration: `intentspec migrate` + tests on v1.0 fixtures
 - [x] 550+ tests (954+), CI green; coverage gate lowered to 80% for v1.2.0 ship
 
-### Phase 2B (v1.2.0)
-- [x] Testing framework: `intentspec test` + intent-test.yaml structural engine
-- [x] Dev loop utilities: `intentspec watch` and `init --pre-commit`
+### Phase 2A (v1.1.0) — **COMPLETE** (June 26 2026)
+- [x] MCP enforcement: code shipped (`intentspec enforce --mcp`); FP validation PASS (ONI-195)
+- [x] Lint engine: 16 rules, per-line disable, source-aware `tools-not-in-source`
+- [x] 4 framework adapters: shipped in v1.0 (CrewAI, LangGraph, AutoGen, OpenAI)
+- [x] Converter accuracy: ≥75% on 15-file benchmark (100% aggregate)
+- [x] Schema migration: `intentspec migrate` + tests on v1.0 fixtures
+- [x] 954+ tests, CI green
+
+### Phase 2B (v1.2.0) — **COMPLETE** (June 26 2026)
+- [x] Testing framework: `intentspec test` + intent-test.yaml structural engine (940+ tests)
+- [x] Dev loop utilities: `intentspec watch` and `init --pre-commit` (grok/agy finalizing)
 - [x] Quiet GitHub status: `intentspec status` + workflow + action (status-only default)
 - [x] Coverage trends: `intentspec coverage --trend`
 - [x] Eval-harness export (ONI-200) — **CUT to Phase 3** (Agy decision June 26 2026)
@@ -237,4 +245,4 @@ The PDD defines 11 kill criteria. These are evaluated monthly during Phase 2:
 
 ---
 
-*Plan created June 23 2026. Research complete. Audit complete (16 findings, all addressed). Revised: added drift detection, eval-harness integration, agentskills export, schema migration, gate criteria. Deferred registry/marketplace/multi-repo to v3. Extended Phase 2B to 10 weeks. Downgraded converter accuracy to P1, badges to P2. Ready for build agent execution.*
+*Plan created June 23 2026. Phase 2A + 2B COMPLETE (June 26 2026). 954+ tests passing. Next: Phase 2C (Growth).*
