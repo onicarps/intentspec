@@ -2,6 +2,19 @@
 
 **This file is the Droid's primary input for code generation. Be specific and complete.**
 
+## Project Status (canonical)
+
+**Read `STATUS.md` in this directory first.**
+
+| Phase | Version | Status |
+|-------|---------|--------|
+| 2A Core moat | v1.1.0 | ✅ COMPLETE |
+| 2B Inner dev loop | v1.2.0 | ✅ COMPLETE — `test`, `watch`, `status`, `coverage --trend` |
+| 2C Growth | v1.3.1 | ✅ COMPLETE — `report`, `/demo`, `analyze`, `gate`, QA fixes |
+| 3 Publish + integrate | — | 🔜 **NEXT** — beta program, TestPyPI gate, deferred cuts |
+
+PyPI: `intentspec==1.3.1` · Tests: 977 passing · Tag: `v1.3.1`
+
 ---
 
 ## Project Identity
@@ -276,7 +289,9 @@ IDS = 100 - (
 
 ## Phase Gates
 
-### Phase 1 Gate (Week 3)
+> **Execution status (June 26 2026):** Phase 1 ✅ · Phase 2A ✅ · Phase 2B ✅ · Phase 2C ✅ · **Phase 3 next** · Phase 4 planned. See `STATUS.md`.
+
+### Phase 1 Gate (Week 3) — ✅ MET
 - `intentspec validate` works on 10+ sample files (schema + semantic)
 - Converter handles AGENTS.md, SKILL.md, and agentskills with interactive review
 - Converter accuracy >= 70% on benchmark (targeting 85%)
@@ -287,7 +302,7 @@ IDS = 100 - (
 - `.intentspec.yaml` config file works
 - 50+ tests, 85%+ coverage
 
-### Phase 2 Gate (Week 5)
+### Phase 2 Gate (Week 5) — ✅ MET (2A + 2B + 2C shipped v1.3.1)
 - `intentspec ci` returns correct exit codes (0/1/2/3)
 - `intentspec audit-report` generates markdown compliance doc
 - GitHub Action works in test repo
@@ -296,7 +311,7 @@ IDS = 100 - (
 - Documentation site works locally
 - 70+ tests, 88%+ coverage
 
-### Phase 3 Gate (Week 7)
+### Phase 3 Gate (Week 7) — 🔜 NEXT
 - TestPyPI validation gate passed (all 9+ commands work from TestPyPI install)
 - PyPI publish v0.1.0
 - Beta program: 5-10 users, feedback incorporated

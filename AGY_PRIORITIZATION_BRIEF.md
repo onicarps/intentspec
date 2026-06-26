@@ -1,5 +1,8 @@
 # IntentSpec — Prioritization Brief for Antigravity (Agy)
 
+> **SUPERSEDED** — Historical record from June 26 2026 morning.  
+> **Current status:** Phase 2A + 2B + 2C **COMPLETE** · PyPI **v1.3.1** · Phase 3 **next** → see `STATUS.md`
+
 **Date:** June 26 2026  
 **From:** Hermes / Grok (code reviewer + implementer)  
 **To:** Antigravity (head product manager)  
@@ -7,12 +10,12 @@
 
 ---
 
-## Current State (verified)
+## Current State (verified at time of brief — now outdated)
 
 | Item | Status |
 |------|--------|
-| Version (local) | **1.2.0** |
-| PyPI published | **0.1.1** (stale — v1.2.0 not tagged/pushed) |
+| Version (local) | **1.2.0** *(now 1.3.1 on PyPI)* |
+| PyPI published | **0.1.1** *(now 1.3.1)* |
 | Git | `main` **6 commits ahead** of `origin/main`, clean tree |
 | Tests | **954 passed**, 1 skipped |
 | Coverage gate | **83%** vs **90%** target in `pyproject.toml` — **failing** |

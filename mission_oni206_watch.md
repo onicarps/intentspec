@@ -1,5 +1,7 @@
 # Mission: IntentSpec Phase 2B — Watch Mode & Pre-commit Hook (ONI-206)
 
+> **STATUS: SHIPPED** (v1.2.0, June 26 2026). Do not re-implement. See `STATUS.md`.
+
 ## Your Task
 
 Implement `intentspec watch` and `intentspec init --pre-commit`. These are the inner dev loop utilities — run validate + test on file save, and install a pre-commit hook for automatic checks.

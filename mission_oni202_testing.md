@@ -1,5 +1,7 @@
 # Mission: IntentSpec Phase 2B — Structural Testing Framework (ONI-202)
 
+> **STATUS: SHIPPED** (v1.2.0, June 26 2026). Do not re-implement. See `STATUS.md`.
+
 ## Your Task
 
 Implement the structural testing framework for IntentSpec. This is the flagship P0 feature of Phase 2B. The framework evaluates `intent-test.yaml` files against parsed `intent.yaml` dataclasses — pure structural validation with no LLM calls needed.

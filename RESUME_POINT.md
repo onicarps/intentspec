@@ -1,29 +1,36 @@
-# IntentSpec Resume Point — June 20 2026 (W5 Complete)
+# IntentSpec Resume Point — June 26 2026
 
-## State: Week 5 COMPLETE, ready for Week 6
+## State: Phase 2A + 2B + 2C COMPLETE — Phase 3 NEXT
 
-### Repo Status
-- github.com/onicarps/intentspec, main branch — up to date, all pushed
-- 391 tests passing, ruff-clean, mkdocs build passes
-- Last commit: c6faf78 "style: fix ruff lint issues"
+**Canonical status:** `STATUS.md`
 
-### Week 5 What Was Built
-- src/intentspec/audit.py (228L) — generate_audit(), SOC 2 / EU AI Act compliance report
-- src/intentspec/adapters/crewai.py (166L) — parse_crewai() wired into converter + format_detect
-- src/intentspec/templates/data-pipeline.yaml, multi-agent-coordinator.yaml
-- cli.py: --template NAME/list, --name override, crewai in --from choices (675L)
-- mkdocs docs site: docs/{index,installation,commands,schema,examples,adapters,ci-integration}.md
-- tests/test_templates.py (18 tests), tests/test_adapters.py (17 tests), tests/test_audit.py (22 tests)
+### Release
+- **PyPI:** `intentspec==1.3.1` (tag `v1.3.1`, published via GitHub Actions)
+- **Tests:** 977 passing, 1 skipped
+- **Repo:** github.com/onicarps/intentspec, `main` up to date
 
-### To Resume
-1. cd ~/.hermes/profiles/intentspec/workspace/
-2. pip install -e ".[dev]" --break-system-packages
-3. python3 -m pytest tests/ -q → 391 passing
+### Phase 2B (v1.2.0) — COMPLETE
+- `intentspec test` — structural testing (ONI-202)
+- `intentspec watch` + `init --pre-commit` (ONI-206)
+- `intentspec status` + `.github/workflows/intentspec.yml` (ONI-205)
+- `intentspec coverage --trend` (ONI-203)
+- ONI-200 eval-harness — **CUT → Phase 3**
 
-### Week 6: Testing + Packaging
-- Edge case testing (unicode, large files, concurrent, symlinks, shallow git)
-- Performance testing (validate <100ms, diff <500ms, score <200ms)
-- Converter accuracy improvement (target 85%+)
-- pyproject.toml finalization, requirements.lock, pip-audit
-- Build + test on clean venv (Python 3.11, 3.12, 3.13)
-- TestPyPI gate before PyPI publish
+### Phase 2C (v1.3.0 → v1.3.1) — COMPLETE
+- `intentspec report`, dashboard `/demo`, `intentspec analyze`, `intentspec gate`
+- v1.3.1 QA fixes: templates packaging, gate MCP data, parseable `--format`, exit code 3 on missing paths, coverage N/A
+- QA: `INTENTSPEC_V130_RETEST_REPORT.md` — PASS 4/4
+
+### To resume work
+```bash
+cd ~/.hermes/profiles/intentspec/workspace/
+pip install --upgrade intentspec   # or: pip install -e ".[dev]" --break-system-packages
+intentspec --version               # expect 1.3.1
+python3 -m pytest tests/ -q      # expect 977 passed
+```
+
+### Phase 3 next (do not re-open 2B/2C)
+1. Beta program — recruit 5–10 users on real repos
+2. TestPyPI gate before PyPI releases
+3. Deferred: ONI-200 eval export, ONI-187 EU AI Act pack, `badge`, agentskills export
+4. Growth: real-repo `analyze`, content distribution

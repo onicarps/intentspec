@@ -198,7 +198,7 @@ These features were in the original plan but deferred per audit findings:
 
 ---
 
-## Phase 2C: Growth (Weeks 16-18, v1.3.0)
+## Phase 2C: Growth (Weeks 16-18, v1.3.0 → v1.3.1)
 
 **Pivot:** Distribution over features. Initiated per Agy prioritization (June 26 2026).
 
@@ -207,6 +207,17 @@ These features were in the original plan but deferred per audit findings:
 | 15 | Shareable agent report card | P0 | 3 days | `intentspec report` — markdown/text/JSON grade card | Viral artifact developers post on social — **shipped** |
 | 16 | Web "Try It Now" demo | P0 | 1 week | Paste AGENTS.md → instant risk insights (dashboard `/demo`) | Zero-friction discovery — **MVP shipped** |
 | 17 | Content marketing | P1 | ongoing | `intentspec analyze` + CONTENT_MARKETING_POST.md | MVP shipped — expand to real repos |
+| 18 | QA / packaging fixes | P0 | 2 days | v1.3.1 patch — templates, gate data, formats, exit codes, coverage N/A | Independent QA PASS 4/4 |
+
+### Phase 2C (v1.3.1) — **COMPLETE** (June 26 2026)
+- [x] Report card: `intentspec report`
+- [x] Web demo: dashboard `/demo`
+- [x] Content marketing: `intentspec analyze` + CONTENT_MARKETING_POST.md
+- [x] Gate validation: ONI-195 report (`intentspec gate`)
+- [x] v1.3.1 QA fixes published to PyPI (templates, gate, `--format`, exit codes)
+- [x] 977 tests passing
+
+**Next: Phase 3 (Publish + Integrate, Beta Program)** — see `workspace/STATUS.md`
 
 ---
 
@@ -245,4 +256,4 @@ The PDD defines 11 kill criteria. These are evaluated monthly during Phase 2:
 
 ---
 
-*Plan created June 23 2026. Phase 2A + 2B COMPLETE (June 26 2026). 954+ tests passing. Next: Phase 2C (Growth).*
+*Plan created June 23 2026. Phase 2A + 2B + 2C COMPLETE (June 26 2026). PyPI v1.3.1. 977 tests passing. Next: Phase 3 (Publish + Integrate, Beta Program). Canonical status: `workspace/STATUS.md`.*

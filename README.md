@@ -2,6 +2,8 @@
 
 **Coverage and enforcement layer for AI agent infrastructure.**
 
+> **Status (June 26 2026):** Phase 2B + 2C **complete** · PyPI **v1.3.1** · Phase 3 (beta program) **next** — see [STATUS.md](STATUS.md)
+
 IntentSpec transforms agent development from ad-hoc documentation to versioned, testable, and enforceable intent. Document agent behavior as code, measure intent coverage, score intent debt, and enforce intent through CI/CD.
 
 Works with any agent spec format — AGENTS.md, SKILL.md, agentskills, or CrewAI. Convert existing specs to a standardized `intent.yaml`, then validate, score, diff, lint, and enforce it in CI/CD.
@@ -53,7 +55,7 @@ IntentSpec now resolves original agent source files (AGENTS.md, SKILL.md, framew
 ## Installation
 
 ```bash
-pip install intentspec
+pip install intentspec   # v1.3.1+
 ```
 
 Requires Python 3.11+.

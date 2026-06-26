@@ -1,5 +1,7 @@
 # Mission: IntentSpec Phase 2B — Quiet GitHub App (ONI-205)
 
+> **STATUS: SHIPPED** (v1.2.0, June 26 2026). Do not re-implement. See `STATUS.md`.
+
 ## Your Task
 
 Implement quiet GitHub App status checks — a passive PR status checker that doesn't require full GitHub App setup. Uses existing GitHub Actions infrastructure.

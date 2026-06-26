@@ -138,7 +138,7 @@ Manual criteria still pending: EU AI Act legal review, GitHub stars milestone, e
 ## Get started
 
 ```bash
-pip install intentspec==1.3.0
+pip install intentspec==1.3.1
 intentspec init --from agentskills   # or AGENTS.md / SKILL.md
 intentspec ci --min-coverage 80
 intentspec report intent.yaml --format markdown -o report-card.md
