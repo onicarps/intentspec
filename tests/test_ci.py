@@ -222,7 +222,7 @@ def test_run_ci_multifile_valid_and_warning_aggregates_to_2(tmp_path: Path) -> N
 
 
 def test_run_ci_multifile_all_valid_aggregates_to_2() -> None:
-    result = run_ci([VALID, VALID])
+    run_ci([VALID, VALID])
 
 
 def test_run_ci_empty_result_set(tmp_path: Path) -> None:
@@ -782,3 +782,254 @@ def test_cli_idempotent_output(runner: CliRunner) -> None:
     b = runner.invoke(main, ["ci", VALID, INVALID, "--format", "json"])
     assert a.output == b.output
     assert a.exit_code == b.exit_code
+
+
+# --- Structural test (intent-test.yaml) integration -------------------------------
+
+# A fully lint-clean, 100%-coverage spec so the test outcome alone drives the code.
+CLEAN_SPEC = """version: "1.0"
+agent:
+  name: "clean-agent"
+  type: "coding"
+  description: "A helpful coding agent for reviewing pull requests thoroughly"
+intent:
+  goals:
+    - description: "Identify bugs and security issues in pull requests reliably"
+      priority: "high"
+      success_criteria: "Zero critical bugs merged to main branch"
+  constraints:
+    - rule: "Always check for common security vulnerabilities"
+      enforceable: true
+  non_negotiables:
+    - rule: "Never approve code containing hardcoded secrets"
+      severity: "hard"
+  tools:
+    allowed:
+      - name: "github_api"
+        rationale: "Required for reviewing and commenting on pull requests"
+    denied:
+      - name: "production_deployer"
+        rationale: "Deployment must always require explicit human approval"
+  boundaries:
+    - scope: "Pull request review in the backend repository"
+      out_of_scope: "Infrastructure changes and database migrations"
+  escalation:
+    trigger: "Security vulnerability detected during review"
+    method: "Immediate alert to the security team channel"
+  failure_modes:
+    - mode: "Agent approves code with subtle logic bugs"
+      mitigation: "Require human sampling of a fraction of approvals"
+metadata:
+  status: "active"
+  owner: "backend-team@acme.com"
+  created: "2026-06-17T00:00:00Z"
+  updated: "2026-06-17T00:00:00Z"
+"""
+
+PASSING_TEST_FILE = """name: "passing-suite"
+description: "Every case passes"
+tests:
+  - name: "escalation-present"
+    type: "presence_check"
+    field: "escalation"
+  - name: "has-goals"
+    type: "count_check"
+    assert: "len(goals) > 0"
+"""
+
+ERROR_TEST_FILE = """name: "error-suite"
+tests:
+  - name: "has-goals"
+    type: "count_check"
+    assert: "len(goals) > 0"
+  - name: "sub-agents-present"
+    type: "presence_check"
+    field: "sub_agents"
+    severity: "error"
+"""
+
+WARNING_TEST_FILE = """name: "warning-suite"
+tests:
+  - name: "has-goals"
+    type: "count_check"
+    assert: "len(goals) > 0"
+  - name: "sub-agents-present"
+    type: "presence_check"
+    field: "sub_agents"
+    severity: "warning"
+"""
+
+MIXED_TEST_FILE = """name: "mixed-suite"
+tests:
+  - name: "sub-agents-warning"
+    type: "presence_check"
+    field: "sub_agents"
+    severity: "warning"
+  - name: "extends-error"
+    type: "presence_check"
+    field: "extends"
+    severity: "error"
+"""
+
+SCHEMA_INVALID_TEST_FILE = """name: "broken-suite"
+tests:
+  - name: "no-type-case"
+    bogus_field: "oops"
+"""
+
+
+def _write_pair(dirpath: Path, test_body: str, intent_body: str = CLEAN_SPEC) -> str:
+    """Write intent.yaml + sibling intent-test.yaml into ``dirpath``; return intent path."""
+    intent_path = dirpath / "intent.yaml"
+    intent_path.write_text(intent_body, encoding="utf-8")
+    (dirpath / "intent-test.yaml").write_text(test_body, encoding="utf-8")
+    return str(intent_path)
+
+
+def test_ci_passing_test_file_exit_0(tmp_path: Path) -> None:
+    spec = _write_pair(tmp_path, PASSING_TEST_FILE)
+    result = run_ci([spec])
+    f = result.files[0]
+    assert f.exit_code == 0
+    assert f.ok is True
+    assert f.test_failures == []
+    assert f.test_errors == []
+    assert f.test_warnings == []
+    assert result.exit_code == 0
+
+
+def test_ci_error_severity_test_failure_exit_1(tmp_path: Path) -> None:
+    spec = _write_pair(tmp_path, ERROR_TEST_FILE)
+    result = run_ci([spec])
+    f = result.files[0]
+    assert f.schema_errors == []
+    assert f.lint_errors == []
+    assert f.exit_code == 1
+    assert any("sub-agents-present" in m for m in f.test_failures)
+    assert result.exit_code == 1
+
+
+def test_ci_warning_severity_test_failure_exit_2(tmp_path: Path) -> None:
+    spec = _write_pair(tmp_path, WARNING_TEST_FILE)
+    result = run_ci([spec])
+    f = result.files[0]
+    assert f.lint_errors == []
+    assert f.exit_code == 2
+    assert f.test_failures == []
+    assert any("sub-agents-present" in m for m in f.test_warnings)
+
+
+def test_ci_error_outranks_warning_test_failure(tmp_path: Path) -> None:
+    spec = _write_pair(tmp_path, MIXED_TEST_FILE)
+    result = run_ci([spec])
+    f = result.files[0]
+    # warning + error tier present together -> error wins
+    assert any("sub-agents-warning" in m for m in f.test_warnings)
+    assert any("extends-error" in m for m in f.test_failures)
+    assert f.exit_code == 1
+
+
+def test_ci_no_test_file_behavior_unchanged_and_fields_default(tmp_path: Path) -> None:
+    intent_path = tmp_path / "intent.yaml"
+    intent_path.write_text(CLEAN_SPEC, encoding="utf-8")  # no sibling intent-test.yaml
+    result = run_ci([str(intent_path)])
+    f = result.files[0]
+    assert f.exit_code == 0
+    assert f.test_failures == []
+    assert f.test_errors == []
+    assert f.test_warnings == []
+    entry = result.to_dict()["files"][0]
+    assert entry["test_failures"] == []
+    assert entry["test_errors"] == []
+    assert entry["test_warnings"] == []
+
+
+def test_ci_existing_valid_fixture_to_json_includes_empty_test_fields() -> None:
+    # VALID has no sibling intent-test.yaml: test fields default to empty.
+    parsed = json.loads(run_ci([VALID]).to_json())
+    entry = parsed["files"][0]
+    assert entry["test_failures"] == []
+    assert entry["test_errors"] == []
+    assert entry["test_warnings"] == []
+
+
+def test_ci_json_yaml_include_test_fields(tmp_path: Path) -> None:
+    spec = _write_pair(tmp_path, ERROR_TEST_FILE)
+    result = run_ci([spec])
+    parsed = json.loads(result.to_json())
+    entry = parsed["files"][0]
+    for key in ("test_failures", "test_warnings", "test_errors"):
+        assert key in entry
+    assert any("sub-agents-present" in m for m in entry["test_failures"])
+    assert yaml.safe_load(result.to_yaml()) == parsed
+
+
+def test_ci_run_ci_pure_no_files_with_test_file(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    work.mkdir()
+    _write_pair(work, ERROR_TEST_FILE)
+
+    def snapshot() -> set[str]:
+        return {str(p) for p in work.rglob("*")}
+
+    before = snapshot()
+    result = run_ci([str(work / "intent.yaml")])
+    assert isinstance(result, CiResult)
+    assert snapshot() == before
+
+
+def test_ci_schema_invalid_test_file_no_crash(tmp_path: Path) -> None:
+    bad_dir = tmp_path / "bad"
+    bad_dir.mkdir()
+    spec = _write_pair(bad_dir, SCHEMA_INVALID_TEST_FILE)
+    good_dir = tmp_path / "good"
+    good_dir.mkdir()
+    good_spec = _write_pair(good_dir, PASSING_TEST_FILE)
+
+    result = run_ci([spec, good_spec])
+    bad_file = result.files[0]
+    good_file = result.files[1]
+    assert bad_file.test_errors  # parse/schema failure captured as an error message
+    assert bad_file.exit_code == 1
+    assert good_file.exit_code == 0  # other files still evaluated
+    # surfaced cleanly in text rendering, no traceback
+    text = result.to_text(use_color=False)
+    assert "Traceback" not in text
+
+
+def test_ci_text_surfaces_test_failures(tmp_path: Path) -> None:
+    spec = _write_pair(tmp_path, ERROR_TEST_FILE)
+    text = run_ci([spec]).to_text(use_color=False)
+    assert "sub-agents-present" in text
+    assert "\x1b[" not in text
+
+
+def test_ci_agrees_with_cli_test_on_error(runner: CliRunner, tmp_path: Path) -> None:
+    work = tmp_path / "err"
+    work.mkdir()
+    spec = _write_pair(work, ERROR_TEST_FILE)
+
+    cli = runner.invoke(main, ["test", str(work), "--format", "json"])
+    assert cli.exit_code == 1
+    cli_failing = {
+        t["name"] for t in json.loads(cli.output)["tests"] if not t["passed"]
+    }
+
+    f = run_ci([spec]).files[0]
+    assert f.exit_code == 1
+    ci_failing = {m.split(":", 1)[0] for m in f.test_failures}
+    assert "sub-agents-present" in cli_failing
+    assert ci_failing == {"sub-agents-present"}
+
+
+def test_ci_agrees_with_cli_test_on_warning(runner: CliRunner, tmp_path: Path) -> None:
+    work = tmp_path / "warn"
+    work.mkdir()
+    spec = _write_pair(work, WARNING_TEST_FILE)
+
+    cli = runner.invoke(main, ["test", str(work)])
+    assert cli.exit_code == 2
+
+    f = run_ci([spec]).files[0]
+    assert f.exit_code == 2
+    assert any("sub-agents-present" in m for m in f.test_warnings)

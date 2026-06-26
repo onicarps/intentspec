@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import glob
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -32,6 +32,8 @@ from intentspec.models.intent import IntentValidationError
 from intentspec.score.ids import compute_ids
 from intentspec.spec.formatter import Formatter
 from intentspec.spec.validate import validate_file
+from intentspec.test_engine import run_intent_tests
+from intentspec.test_schema import IntentTestSchemaError, parse_intent_test
 
 __all__ = [
     "CiCheckResult",
@@ -66,6 +68,13 @@ class CiCheckResult:
         coverage: Coverage percentage 0-100, or None if unprocessable.
         coverage_below_threshold: True when coverage is below ``min_coverage``.
         error: Set when the file could not be processed (missing/empty/unreadable).
+        test_failures: Error-severity structural-test failure messages (sibling
+            ``intent-test.yaml``); empty when there is no test file.
+        test_warnings: Warning-severity structural-test failure messages; empty
+            when there is no test file.
+        test_errors: Structural-test evaluation/schema error messages (e.g. a
+            schema-invalid test file or unparseable assertion); empty when there is
+            no test file.
     """
 
     path: str
@@ -79,6 +88,9 @@ class CiCheckResult:
     coverage: int | None
     coverage_below_threshold: bool
     error: str | None
+    test_failures: list[str] = field(default_factory=list)
+    test_warnings: list[str] = field(default_factory=list)
+    test_errors: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -120,6 +132,9 @@ class CiResult:
                     "coverage": f.coverage,
                     "coverage_below_threshold": f.coverage_below_threshold,
                     "error": f.error,
+                    "test_failures": list(f.test_failures),
+                    "test_warnings": list(f.test_warnings),
+                    "test_errors": list(f.test_errors),
                 }
                 for f in self.files
             ],
@@ -157,10 +172,16 @@ class CiResult:
                 lines.append(fmt.error(message))
             for message in f.lint_errors:
                 lines.append(fmt.error(message))
+            for message in f.test_failures:
+                lines.append(fmt.error(f"test failed: {message}"))
+            for message in f.test_errors:
+                lines.append(fmt.error(f"test error: {message}"))
             for message in f.semantic_warnings:
                 lines.append(fmt.warning(message))
             for message in f.lint_warnings:
                 lines.append(fmt.warning(message))
+            for message in f.test_warnings:
+                lines.append(fmt.warning(f"test warning: {message}"))
             if f.coverage is not None:
                 cov_line = f"coverage: {f.coverage}%"
                 if f.coverage_below_threshold:
@@ -283,6 +304,8 @@ def _evaluate_file(
     )
     coverage_below_threshold = min_coverage > 0 and coverage < min_coverage
 
+    test_failures, test_warnings, test_errors = _run_structural_tests(intent, file_path)
+
     exit_code = _per_file_code(
         error=None,
         schema_errors=schema_errors,
@@ -290,6 +313,9 @@ def _evaluate_file(
         lint_errors=lint_errors,
         lint_warnings=lint_warnings,
         coverage_below_threshold=coverage_below_threshold,
+        test_failures=test_failures,
+        test_warnings=test_warnings,
+        test_errors=test_errors,
         strict=strict,
     )
     return CiCheckResult(
@@ -304,7 +330,58 @@ def _evaluate_file(
         coverage=coverage,
         coverage_below_threshold=coverage_below_threshold,
         error=None,
+        test_failures=test_failures,
+        test_warnings=test_warnings,
+        test_errors=test_errors,
     )
+
+
+def _run_structural_tests(
+    intent: Any, file_path: Path
+) -> tuple[list[str], list[str], list[str]]:
+    """Run a sibling ``intent-test.yaml`` (if present) against ``intent``.
+
+    When no sibling test file exists, returns three empty lists so CI behavior is
+    unchanged. A schema-invalid test file (or any parse failure) is captured as an
+    error message rather than raising, so CI stays traceback-free and continues to
+    evaluate other files.
+
+    Args:
+        intent: The parsed intent the test cases assert against.
+        file_path: The resolved ``intent.yaml`` path; its sibling
+            ``intent-test.yaml`` is executed when present.
+
+    Returns:
+        ``(test_failures, test_warnings, test_errors)`` — error-severity failure
+        messages, warning-severity failure messages, and evaluation/schema error
+        messages respectively.
+    """
+    test_path = file_path.parent / "intent-test.yaml"
+    if not test_path.is_file():
+        return [], [], []
+
+    try:
+        intent_test = parse_intent_test(test_path)
+    except IntentTestSchemaError as exc:
+        return [], [], [f"invalid intent-test.yaml: {message}" for message in exc.errors]
+    except Exception as exc:  # keep CI traceback-free on any unexpected parse failure
+        return [], [], [f"could not process intent-test.yaml: {exc}"]
+
+    suite = run_intent_tests(intent, intent_test)
+    test_failures: list[str] = []
+    test_warnings: list[str] = []
+    test_errors: list[str] = []
+    for result in suite.tests:
+        if result.passed:
+            continue
+        message = f"{result.name}: {result.message}"
+        if result.error:
+            test_errors.append(message)
+        elif result.severity == "warning":
+            test_warnings.append(message)
+        else:
+            test_failures.append(message)
+    return test_failures, test_warnings, test_errors
 
 
 def _error_result(display_path: str, message: str) -> CiCheckResult:
@@ -333,12 +410,25 @@ def _per_file_code(
     lint_warnings: list[str],
     coverage_below_threshold: bool,
     strict: bool,
+    test_failures: list[str] | None = None,
+    test_warnings: list[str] | None = None,
+    test_errors: list[str] | None = None,
 ) -> int:
-    """Compute a single file's exit code (highest precedence wins)."""
+    """Compute a single file's exit code (highest precedence wins).
+
+    Error-severity test failures and structural-test evaluation/schema errors are
+    treated as the error tier (exit ``1``), like ``lint_errors``; warning-severity
+    test failures are treated as the warning tier (exit ``2``).
+    """
     if error is not None or coverage_below_threshold:
         return 3
-    has_errors = bool(schema_errors) or bool(lint_errors)
-    has_warnings = bool(semantic_warnings) or bool(lint_warnings)
+    has_errors = (
+        bool(schema_errors)
+        or bool(lint_errors)
+        or bool(test_failures)
+        or bool(test_errors)
+    )
+    has_warnings = bool(semantic_warnings) or bool(lint_warnings) or bool(test_warnings)
     if strict:
         return 1 if (has_errors or has_warnings) else 0
     if has_errors:
