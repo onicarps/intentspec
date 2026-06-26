@@ -49,6 +49,12 @@
 - Initial QA: `INTENTSPEC_V130_TEST_REPORT.md` (v1.3.0, grade C+)
 - Post-fix QA: `INTENTSPEC_V130_RETEST_REPORT.md` (v1.3.1, **PASS 4/4**)
 
+## Tracking sync (June 26 2026)
+
+- **Notion:** IntentSpec page updated — 2A+2B+2C complete, Phase 3 next
+- **Linear:** 11 issues → Done, 2 → Canceled (ONI-209, ONI-211); Phase 3 backlog: ONI-188, ONI-190, ONI-213
+- **Re-run:** `python3 scripts/sync_phase_status.py`
+
 ## For droids / agents
 
 **Read this file first.** Do not implement Phase 2A/2B/2C features — they are shipped. New work targets Phase 3 unless explicitly scoped otherwise.
