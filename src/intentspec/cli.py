@@ -34,12 +34,16 @@ from intentspec.models.intent import IntentValidationError
 from intentspec.score.ids import compute_ids
 from intentspec.spec.formatter import Formatter
 from intentspec.spec.validate import validate_file, validate_schema, validate_semantic
+from intentspec.coverage_trend import get_trend, record_coverage
+from intentspec.precommit import install_pre_commit
+from intentspec.status import run_status
 from intentspec.test_engine import run_intent_tests
 from intentspec.test_schema import IntentTestSchemaError, parse_intent_test
+from intentspec.watch import run_watch_cycle, watch_directory, watch_exit_code
 
 
 @click.group()
-@click.version_option(version="1.1.0", prog_name="intentspec")
+@click.version_option(version="1.2.0", prog_name="intentspec")
 def main():
     """IntentSpec — Coverage and enforcement layer for AI agent infrastructure.
 
@@ -180,8 +184,9 @@ def score(path: str, by_agent: bool, weights: str | None, output_format: str):
 
 @main.command()
 @click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--trend", is_flag=True, help="Record and show coverage trend history")
 @click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
-def coverage(path: str, output_format: str):
+def coverage(path: str, trend: bool, output_format: str):
     """Show intent coverage percentage.
 
     PATH is the directory or file to analyze. Defaults to current directory.
@@ -208,12 +213,30 @@ def coverage(path: str, output_format: str):
                 intent,
                 source_path=str(source) if source else None,
             )
+            if trend:
+                record_coverage(f, cov.overall * 100)
+                points = get_trend(f)
+                payload = {
+                    "file": str(f),
+                    "coverage": round(cov.overall * 100, 2),
+                    "trend": [point.to_dict() for point in points],
+                }
+                if output_format == "json":
+                    click.echo(json.dumps(payload, indent=2))
+                elif output_format == "yaml":
+                    click.echo(yaml.dump(payload, default_flow_style=False, sort_keys=False))
+                else:
+                    click.echo(f"\n{f}")
+                    click.echo(cov.to_text())
+                    if points:
+                        click.echo("  Coverage trend:")
+                        for point in points[-5:]:
+                            click.echo(f"    {point.timestamp}: {point.coverage}%")
+                continue
 
             if output_format == "json":
-                import json
                 click.echo(json.dumps(cov.to_dict(), indent=2))
             elif output_format == "yaml":
-                import yaml
                 click.echo(yaml.dump(cov.to_dict(), default_flow_style=False))
             else:
                 click.echo(f"\n{f}")
@@ -268,6 +291,7 @@ def coverage(path: str, output_format: str):
 )
 @click.option("--strict", is_flag=True, default=False, help="Refuse to write if the W1 validator returns errors.")
 @click.option("--force", is_flag=True, default=False, help="Overwrite an existing output file.")
+@click.option("--pre-commit", is_flag=True, help="Install pre-commit hook configuration.")
 def init(
     source: str | None,
     from_format: str | None,
@@ -281,13 +305,20 @@ def init(
     output_format: str,
     strict: bool,
     force: bool,
+    pre_commit: bool,
 ):
     """Initialize intent.yaml from an existing agent spec or template.
 
     SOURCE is the path to an AGENTS.md, SKILL.md, or an agentskills directory.
     """
+    if pre_commit and source is None and not quickstart and template_name is None:
+        _install_pre_commit_hook()
+        return
+
     if template_name is not None:
-        _run_template_init(template_name, output, force, strict, agent_name_override)
+        _run_template_init(
+            template_name, output, force, strict, agent_name_override, pre_commit=pre_commit
+        )
         return
 
     if quickstart:
@@ -314,6 +345,7 @@ def init(
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(rendered, encoding="utf-8")
         click.echo(f"Wrote {out_path}")
+        _maybe_install_pre_commit(pre_commit)
         sys.exit(0)
 
     if source is None:
@@ -366,7 +398,24 @@ def init(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(rendered, encoding="utf-8")
     click.echo(f"Wrote {out_path}")
+    _maybe_install_pre_commit(pre_commit)
     sys.exit(0)
+
+
+def _install_pre_commit_hook() -> None:
+    """Install ``.pre-commit-config.yaml`` in the current directory."""
+    try:
+        path = install_pre_commit(Path.cwd())
+    except FileExistsError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+    click.echo(f"Pre-commit hook installed at {path}")
+    click.echo("Tip: add .intentspec/cache/ to .gitignore if needed.")
+
+
+def _maybe_install_pre_commit(pre_commit: bool) -> None:
+    if pre_commit:
+        _install_pre_commit_hook()
 
 
 def _run_quickstart_wizard() -> ParseResult:
@@ -420,6 +469,8 @@ def _run_template_init(
     force: bool,
     strict: bool,
     agent_name_override: str | None = None,
+    *,
+    pre_commit: bool = False,
 ) -> None:
     """Handle --template flag: copy built-in template to output path."""
     if template_name == "list":
@@ -478,9 +529,11 @@ def _run_template_init(
         if strict:
             out_path.unlink()
             sys.exit(1)
+        _maybe_install_pre_commit(pre_commit)
         sys.exit(0)
 
     click.echo(f"Wrote {out_path}")
+    _maybe_install_pre_commit(pre_commit)
     sys.exit(0)
 
 
@@ -945,6 +998,80 @@ def test(path: str, output_format: str):
     if suite.warnings > 0:
         sys.exit(2)
     sys.exit(0)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="json")
+def status(path: str, output_format: str):
+    """Generate CI status output for GitHub Actions (validate + lint + test)."""
+    result = run_status([path])
+
+    if output_format == "json":
+        click.echo(json.dumps(result.to_dict(), indent=2))
+    elif output_format == "yaml":
+        click.echo(yaml.dump(result.to_dict(), default_flow_style=False, sort_keys=False))
+    else:
+        state = "PASS" if result.passed else "FAIL"
+        click.echo(f"IntentSpec status: {state} (exit {result.exit_code})")
+        for check, label in result.checks.items():
+            click.echo(f"  {check}: {label}")
+        for issue in result.issues[:10]:
+            click.echo(f"  [{issue.severity}] {issue.check}: {issue.message}")
+
+    sys.exit(result.exit_code)
+
+
+@main.command()
+@click.argument("path", type=click.Path(), default=".", required=False)
+@click.option("--once", is_flag=True, help="Run one check cycle and exit (for tests/CI).")
+@click.option("--format", "output_format", type=click.Choice(["text", "json", "yaml"]), default="text")
+def watch(path: str, once: bool, output_format: str):
+    """Watch intent.yaml and run validate + lint + test on save."""
+    target = Path(path)
+    intent_path = target / "intent.yaml" if target.is_dir() else target
+    if not intent_path.is_file():
+        click.echo(f"Error: no intent.yaml found at {target}", err=True)
+        sys.exit(3)
+
+    def _emit(result):
+        if output_format == "json":
+            payload = {
+                "path": str(result.path),
+                "valid": result.valid,
+                "tests_run": result.tests_run,
+                "tests_passed": result.tests_passed,
+                "tests_failed": result.tests_failed,
+                "errors": result.errors,
+                "warnings": result.warnings,
+            }
+            click.echo(json.dumps(payload, indent=2))
+        elif output_format == "yaml":
+            click.echo(
+                yaml.dump(
+                    {
+                        "path": str(result.path),
+                        "valid": result.valid,
+                        "tests_run": result.tests_run,
+                        "tests_passed": result.tests_passed,
+                        "tests_failed": result.tests_failed,
+                        "errors": result.errors,
+                        "warnings": result.warnings,
+                    },
+                    default_flow_style=False,
+                    sort_keys=False,
+                )
+            )
+        else:
+            click.echo(result.to_text())
+
+    if once:
+        result = run_watch_cycle(intent_path)
+        _emit(result)
+        sys.exit(watch_exit_code(result))
+
+    click.echo(f"Watching {intent_path} (Ctrl+C to stop)...")
+    watch_directory(intent_path, _emit)
 
 
 if __name__ == "__main__":

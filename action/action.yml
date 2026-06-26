@@ -1,16 +1,24 @@
 name: "IntentSpec CI"
-description: "Run intentspec ci and post a PR comment with the score and coverage"
+description: "Run intentspec status or ci checks for intent.yaml files"
 inputs:
   path:
     description: "File or directory to check (directories glob **/intent.yaml)"
     default: "."
     required: false
   min-coverage:
-    description: "Minimum coverage threshold (0-100). Exit 3 if below."
+    description: "Minimum coverage threshold (0-100). Exit 3 if below. Used only with full ci mode."
     default: "0"
     required: false
   strict:
-    description: "Fail on warnings too (promotes exit code 2 to 1)"
+    description: "Fail on warnings too (promotes exit code 2 to 1). Used only with full ci mode."
+    default: "false"
+    required: false
+  status-only:
+    description: "Run intentspec status (validate + lint + test) instead of full ci"
+    default: "true"
+    required: false
+  comment:
+    description: "Post a PR comment with results (full ci mode only)"
     default: "false"
     required: false
 runs:
@@ -20,7 +28,19 @@ runs:
       shell: bash
       run: pip install intentspec
 
+    - name: Run intentspec status
+      if: inputs.status-only == 'true'
+      id: status
+      shell: bash
+      run: |
+        OUTPUT=$(intentspec status "${{ inputs.path }}" --format json)
+        echo "result<<EOF" >> "$GITHUB_OUTPUT"
+        echo "$OUTPUT" >> "$GITHUB_OUTPUT"
+        echo "EOF" >> "$GITHUB_OUTPUT"
+        exit $?
+
     - name: Run intentspec ci
+      if: inputs.status-only != 'true'
       id: ci
       shell: bash
       run: |
@@ -37,14 +57,10 @@ runs:
         echo "result<<EOF" >> "$GITHUB_OUTPUT"
         echo "$OUTPUT" >> "$GITHUB_OUTPUT"
         echo "EOF" >> "$GITHUB_OUTPUT"
-
-        # Propagate the intentspec exit code
-        exit_code=$?
-        echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-        exit $exit_code
+        exit $?
 
     - name: Post PR comment with score and coverage
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && inputs.comment == 'true' && inputs.status-only != 'true'
       uses: actions/github-script@v7
       with:
         script: |

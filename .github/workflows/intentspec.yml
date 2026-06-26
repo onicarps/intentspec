@@ -1,8 +1,9 @@
-name: IntentSpec CI
+name: IntentSpec
 
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
 
 jobs:
   intentspec:
@@ -10,8 +11,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./action
+      - uses: actions/setup-python@v5
         with:
-          path: .
-          min-coverage: "0"
-          strict: "false"
+          python-version: "3.12"
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Run IntentSpec status check
+        run: intentspec status .
+
+      - name: Annotate job result
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "IntentSpec status check passed"
+          else
+            echo "IntentSpec status check failed — see workflow logs"
+            exit 1
+          fi

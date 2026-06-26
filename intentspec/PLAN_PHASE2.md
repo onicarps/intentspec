@@ -94,16 +94,17 @@
 
 | # | Feature | Priority | Effort | Deliverable | Justification |
 |---|---------|----------|--------|-------------|---------------|
-| 10 | Intent testing framework (`test`) | P0 | 2 weeks | `intentspec test` with `intent-test.yaml`. Ultra-fast, deterministic local validation via heavy mocking. | Core developer need: verify constraints locally without LLM latency/flakiness |
-| 11 | Quiet GitHub App | P0 | 1.5 weeks | Pass/fail PR status checks. Fail links to a beautiful, actionable detail page (our growth engine). | Non-hostile distribution; solves retention while capturing viral loops on failure |
-| 12 | Eval-harness integration | P1 | 1 week | Output intent specs as eval dimensions. | Meets testing ecosystem where it lives |
-| 13 | Bidirectional agentskills export | P1 | 1 week | `intentspec export --to-skill-md` | "Embrace and extend" Trojan Horse to acquire `agentskills` users |
+| 10 | Structural Testing Framework (`test`) | P0 | 2 weeks | `intentspec test`. Pure structural evaluation against the parsed YAML/dataclass (no LLM mocking needed). | Validates constraint logic instantly and deterministically. |
+| 11 | Inner Dev Loop Utilities | P0 | 1.5 weeks | `intentspec watch` and `intentspec init --pre-commit`. | Actual developer workflow integration. |
+| 12 | Quiet GitHub Status Check | P0 | 1 week | Pass/fail PR status checks. (Cut: ambitious details dashboard). | Solves retention without massive UI scope creep. |
+| 13 | Coverage Trend Tracking | P1 | 1 week | `intentspec coverage --trend` | 1-day feature that supports management visibility. |
+| 14 | Eval-harness export | P2 | 3 days | Output intent specs as eval dimensions. | Meets testing ecosystem where it lives. |
 
 ### Edge Cases
 
-- **Testing framework:** Must include robust out-of-the-box mocking utilities to bypass actual LLM calls. Millisecond-level latency is required. Scope: testing harness, not full sandbox (sandbox → v2).
-- **Quiet GitHub App:** Strictly a status check by default (no noisy PR comments unless opted-in). The "Details" page must be aggressively optimized to convert failing developers into adopters.
-- **agentskills export:** Handles intent.yaml features with no SKILL.md equivalent (documented mapping gaps). Requires providing undeniable CI/CD value so users don't just export and uninstall.
+- **Testing framework:** `intent-test.yaml` schema must be strictly defined first. No arbitrary code execution. Uses `yaml.safe_load`. Evaluates assertions against the Intent dataclass.
+- **GitHub App:** Simple status check link. No heavy dashboard. Verify webhook signatures.
+- **Watch Mode:** Efficient file watching, runs validate + test on save.
 
 ---
 
@@ -158,12 +159,13 @@ These features were in the original plan but deferred per audit findings:
 ### Phase 2B (The Inner Dev Loop)
 | Issue | Title | Priority |
 |-------|-------|----------|
-| ONI-202 | `intentspec test` — intent testing framework (with heavy mocking) | P0 |
-| ONI-205 | Quiet GitHub App — opt-in PR status checks + high-conversion details page | P0 |
-| ONI-200 | Eval-harness integration (intent specs as eval dimensions) | P1 |
-| ONI-204 | Bidirectional agentskills integration (export to SKILL.md) | P1 |
+| ONI-202 | `intentspec test` — structural intent testing framework | P0 |
+| ONI-206 | `intentspec watch` and `init --pre-commit` | P0 |
+| ONI-205 | Quiet GitHub App (status checks only) | P0 |
+| ONI-203 | Coverage trend tracking | P1 |
+| ONI-200 | Eval-harness integration | P2 |
 
-*(Note: ONI-197 [VS Code extension], ONI-198, ONI-199, ONI-201, ONI-203 killed in strategic pivot to maintain focus)*
+*(Note: agentskills export, VS Code extension, and details dashboard cut to Phase 3 per Hermes audit)*
 
 ---
 
@@ -179,11 +181,12 @@ These features were in the original plan but deferred per audit findings:
 - [x] 550+ tests (860+), CI green; coverage gate 90% still pending
 
 ### Phase 2B (v1.2.0)
-- [ ] Testing framework: Sub-second test execution via built-in mocking utilities
-- [ ] Quiet GitHub App: PR status checks installed on 10+ repos, featuring actionable details page
-- [ ] Eval-harness integration: exports intent specs as eval dimensions
-- [ ] agentskills export: intent.yaml → SKILL.md
-- [ ] 650+ tests, 88%+ coverage
+- [x] Testing framework: `intentspec test` + intent-test.yaml structural engine
+- [x] Dev loop utilities: `intentspec watch` and `init --pre-commit`
+- [x] Quiet GitHub status: `intentspec status` + workflow + action (status-only default)
+- [x] Coverage trends: `intentspec coverage --trend`
+- [ ] Eval-harness export (ONI-200, P2 — deferred)
+- [x] 650+ tests; coverage gate 90% still pending
 
 ---
 
